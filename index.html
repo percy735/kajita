@@ -2577,12 +2577,15 @@ function calNav(dir) {
   renderCalendar();
 }
 function calGoToday() {
-  const iso = new Date().toISOString().split('T')[0];
+  const limaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
+  const iso = limaDate.toISOString().split('T')[0];
   closeCalendar();
   selectDay(iso);
 }
 function renderCalendar() {
-  const today  = new Date().toISOString().split('T')[0];
+  // Usar zona horaria de Lima
+  const limaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
+  const today = limaDate.toISOString().split('T')[0];
   const lbl = new Date(calYear, calMonth, 1)
     .toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
   document.getElementById('calMonthLbl').textContent =
@@ -3187,7 +3190,8 @@ function jumpToEntry(id) {
 }
 
 function init() {
-  const today = new Date();
+  // Usar zona horaria de Lima, Perú (UTC-5)
+  const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
   activeDay = today.toISOString().split('T')[0];
   buildDayBar(); render();
   checkOnboarding();
@@ -3196,10 +3200,16 @@ function init() {
 function buildDayBar() {
   const strip = document.getElementById('dateStrip');
   if(!strip) return;
-  const today = new Date().toISOString().split('T')[0];
+  // Usar zona horaria de Lima, Perú
+  const limaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
+  const today = limaDate.toISOString().split('T')[0];
   const days = [];
   // Solo mostrar desde 29 días atrás hasta HOY (no días futuros)
-  for(let i=29;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().split('T')[0]);}
+  for(let i=29;i>=0;i--){
+    const d = new Date(limaDate);
+    d.setDate(limaDate.getDate()-i);
+    days.push(d.toISOString().split('T')[0]);
+  }
   const activeIdx = days.indexOf(activeDay);
 
   strip.innerHTML = days.map((iso, idx)=>{
@@ -3235,7 +3245,9 @@ function buildDayBar() {
 }
 
 function selectDay(iso){
-  const today = new Date().toISOString().split('T')[0];
+  // Usar zona horaria de Lima para validar
+  const limaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
+  const today = limaDate.toISOString().split('T')[0];
   // No permitir seleccionar días futuros
   if(iso > today) {
     toast('⚠️ No puedes seleccionar días futuros');
