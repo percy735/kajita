@@ -1575,7 +1575,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.2-FLOW</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.3-PRINT</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -4003,8 +4003,8 @@ function showPDFPreview() {
   const allRows = makeRows([...incomes, ...expenses, ...credits]);
   const emptyRow = `<tr><td colspan="5" style="padding:24px;text-align:center;color:${C.muted};font-style:italic;font-family:'Fraunces',serif;font-size:13px;">Sin movimientos en esta fecha.</td></tr>`;
 
-  // Bloque créditos pendientes (todos, no solo del día)
-  const pending = entries.filter(e => e.credit);
+  // Bloque créditos pendientes (solo del día seleccionado)
+  const pending = entries.filter(e => e.credit && e.date === activeDay);
   const pendingHtml = pending.length === 0 ? '' : `
     <div style="margin-top:18px; border:1.5px solid #FCD34D; background:#FFFBEB; border-radius:10px; overflow:hidden; page-break-inside:avoid;">
       <div style="background:#FEF3C7; padding:8px 14px; display:flex; align-items:center; justify-content:space-between;">
