@@ -1572,7 +1572,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v2.5-FIX</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v3.0-SYNC</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -4212,220 +4212,200 @@ setInterval(()=>{
   }
 }, 30000); // 30 segundos
 
-const _save=window.save;
-window.save=()=>{};
+// ══════════════════════════════════════════════════════════════
+// SISTEMA DE SINCRONIZACIÓN CON SUPABASE (Versión limpia)
+// ══════════════════════════════════════════════════════════════
 
-const _subE=window.submitEntry;
-window.submitEntry=async function(){
-  if(!currentUser){toast('Inicia sesión');return;}
-  const d=document.getElementById('iDesc').value.trim();
-  const a=parseFloat(document.getElementById('iAmt').value);
-  const t=new Date().toTimeString().slice(0,5);
-  const cl=cType==='income'?document.getElementById('iClient').value.trim():'';
-  if(!d){toast('Escribe descripción');return;}
-  if(!a||a<=0){toast('Monto inválido');return;}
-  if(cCredit&&!cl){toast('Falta cliente');return;}
-  try{
-    const{data,error}=await sb.from('entries').insert([{user_id:currentUser.id,type:cType,description:d,amount:a,payment_type:cPay,date:activeDay,time:t,is_credit:cCredit,client_name:cl||null,is_paid:false}]).select().single();
-    if(error)throw error;
-    entries.unshift({id:data.id,type:cType,desc:d,amount:a,pay:cPay,date:activeDay,time:t,credit:cCredit,client:cl,paid:false});
-    document.getElementById('iDesc').value='';
-    document.getElementById('iAmt').value='';
-    document.getElementById('iClient').value='';
-    document.getElementById('iCredit').checked=false;
-    onCreditToggle();
-    closeAllPickers();
-    render();
-    toast('✓ Guardado');
-  }catch(e){toast('✗ Error');console.error(e);}
-};
-
-const _delE=window.delEntry;
-window.delEntry=async function(id){
-  if(!currentUser)return;
-  if(!confirm('¿Eliminar?'))return;
-  try{
-    await sb.from('entries').delete().eq('id',id).eq('user_id',currentUser.id);
-    entries=entries.filter(e=>e.id!==id);
-    render();
-    toast('✓ Eliminado');
-  }catch(e){toast('✗ Error');console.error(e);}
-};
-
-const _colC=window.collectCredit;
-window.collectCredit=async function(id){
-  if(!currentUser)return;
-  if(!confirm('¿Cobrado?'))return;
-  const e=entries.find(x=>x.id===id);
-  if(!e)return;
-  try{
-    await sb.from('entries').update({is_credit:false,is_paid:true}).eq('id',id).eq('user_id',currentUser.id);
-    e.credit=false;
-    e.paid=true;
-    render();
-    toast('✓ Cobrado');
-  }catch(err){toast('✗ Error');console.error(err);}
-};
-
-const _addP=window.addProduct;
-window.addProduct=async function(){
-  if(!currentUser){toast('Inicia sesión');return;}
-  const n=document.getElementById('cpName').value.trim();
-  const p=parseFloat(document.getElementById('cpPrice').value);
-  if(!n||!p||p<=0){toast('Datos inválidos');return;}
-  if(editingProductId){
-    const pr=products.find(x=>x.id===editingProductId);
-    if(!pr)return;
-    try{
-      await sb.from('products').update({name:n,price:p}).eq('id',editingProductId).eq('user_id',currentUser.id);
-      pr.name=n;
-      pr.price=p;
-      editingProductId=null;
-      document.getElementById('cat-add-btn-prod').textContent='+ Agregar';
-      document.getElementById('cat-cancel-prod').style.display='none';
-      toast('✓ Actualizado');
-    }catch(e){toast('✗ Error');return;}
-  }else{
-    try{
-      const{data}=await sb.from('products').insert([{user_id:currentUser.id,name:n,price:p}]).select().single();
-      products.unshift({id:data.id,name:n,price:p});
-      toast('✓ Agregado');
-    }catch(e){toast('✗ Error');return;}
-  }
-  document.getElementById('cpName').value='';
-  document.getElementById('cpPrice').value='';
-  renderCatalog();
-  renderProductChips();
-};
-
-const _delP=window.delProduct;
-window.delProduct=async function(id){
-  if(!currentUser)return;
-  if(editingProductId===id)cancelEditProduct();
-  try{
-    await sb.from('products').delete().eq('id',id).eq('user_id',currentUser.id);
-    products=products.filter(p=>p.id!==id);
-    renderCatalog();
-    renderProductChips();
-    toast('✓ Eliminado');
-  }catch(e){toast('✗ Error');}
-};
-
-const _addC=window.addClient;
-window.addClient=async function(){
-  if(!currentUser){toast('Inicia sesión');return;}
-  const n=document.getElementById('ccName').value.trim();
-  const ph=document.getElementById('ccPhone').value.trim();
-  if(!n){toast('Falta nombre');return;}
-  if(editingClientId){
-    const cl=clients.find(x=>x.id===editingClientId);
-    if(!cl)return;
-    try{
-      await sb.from('clients').update({name:n,phone:ph||null}).eq('id',editingClientId).eq('user_id',currentUser.id);
-      cl.name=n;
-      cl.phone=ph;
-      editingClientId=null;
-      document.getElementById('cat-add-btn-cli').textContent='+ Agregar';
-      document.getElementById('cat-cancel-cli').style.display='none';
-      toast('✓ Actualizado');
-    }catch(e){toast('✗ Error');return;}
-  }else{
-    try{
-      const{data}=await sb.from('clients').insert([{user_id:currentUser.id,name:n,phone:ph||null}]).select().single();
-      clients.unshift({id:data.id,name:n,phone:ph});
-      toast('✓ Agregado');
-    }catch(e){toast('✗ Error');return;}
-  }
-  document.getElementById('ccName').value='';
-  document.getElementById('ccPhone').value='';
-  renderCatalog();
-  showClientDropdown('');
-};
-
-const _delC=window.delClient;
-window.delClient=async function(id){
-  if(!currentUser)return;
-  if(editingClientId===id)cancelEditClient();
-  try{
-    await sb.from('clients').delete().eq('id',id).eq('user_id',currentUser.id);
-    clients=clients.filter(c=>c.id!==id);
-    renderCatalog();
-    showClientDropdown('');
-    toast('✓ Eliminado');
-  }catch(e){toast('✗ Error');}
-};
-
-// Override savePanelClient para guardar en Supabase
-const _savePanelClient=window.savePanelClient;
-window.savePanelClient=async function(){
-  if(!currentUser){toast('Inicia sesión');return;}
-  const name=document.getElementById('pfCliName').value.trim();
-  const phone=document.getElementById('pfCliPhone').value.trim();
-  if(!name){document.getElementById('pfCliName').focus();return;}
-  const id=_panelEditId.cli;
+// Guardar TODO en Supabase cuando se llame a save()
+const _originalSave = window.save;
+window.save = async function() {
+  // Guardar local también (backup)
+  if(_originalSave) _originalSave();
   
-  if(id!==null){
-    // Editar cliente existente
-    const c=clients.find(x=>x.id===id);
-    if(!c)return;
-    try{
-      await sb.from('clients').update({name,phone:phone||null}).eq('id',id).eq('user_id',currentUser.id);
-      c.name=name;
-      c.phone=phone;
-      toast('✓ Cliente actualizado');
-    }catch(e){
-      console.error('Error updating client:', e);
-      toast('✗ Error al actualizar');
-      return;
-    }
-  }else{
-    // Crear nuevo cliente
-    try{
-      const{data,error}=await sb.from('clients').insert([{user_id:currentUser.id,name,phone:phone||null}]).select().single();
-      if(error) throw error;
-      clients.unshift({id:data.id,name,phone});
-      toast('✓ Cliente agregado');
-    }catch(e){
-      console.error('Error creating client:', e);
-      toast('✗ Error al crear');
-      return;
+  // Sincronizar con Supabase
+  if(!currentUser || currentUser.id?.includes('demo-user')) return;
+  
+  try {
+    // Sincronizar ENTRIES (movimientos)
+    await syncEntries();
+  } catch(e) {
+    console.error('Error syncing entries:', e);
+  }
+};
+
+// Función para sincronizar movimientos
+async function syncEntries() {
+  if(!currentUser) return;
+  const uid = currentUser.id;
+  
+  // Obtener entries actuales de Supabase
+  const { data: cloudEntries } = await sb.from('entries').select('id').eq('user_id', uid);
+  const cloudIds = new Set((cloudEntries || []).map(e => e.id));
+  const localIds = new Set(entries.map(e => e.id));
+  
+  // Eliminar de Supabase los que ya no están localmente
+  for(const cloudId of cloudIds) {
+    if(!localIds.has(cloudId)) {
+      await sb.from('entries').delete().eq('id', cloudId).eq('user_id', uid);
     }
   }
-  cancelPanelForm('cli');
-  renderCliPanel();
-  renderClientDropdown();
+  
+  // Insertar/actualizar los locales en Supabase
+  for(const e of entries) {
+    if(cloudIds.has(e.id)) {
+      // Actualizar
+      await sb.from('entries').update({
+        type: e.type,
+        description: e.desc,
+        amount: e.amount,
+        payment_type: e.pay,
+        date: e.date,
+        time: e.time,
+        is_credit: e.credit || false,
+        client_name: e.client || null,
+        is_paid: e.paid || false
+      }).eq('id', e.id).eq('user_id', uid);
+    } else {
+      // Insertar nuevo (con id auto-generado, ignorando el id local)
+      const { data, error } = await sb.from('entries').insert([{
+        user_id: uid,
+        type: e.type,
+        description: e.desc,
+        amount: e.amount,
+        payment_type: e.pay,
+        date: e.date,
+        time: e.time,
+        is_credit: e.credit || false,
+        client_name: e.client || null,
+        is_paid: e.paid || false
+      }]).select().single();
+      if(data && !error) {
+        // Actualizar el ID local con el de Supabase
+        const idx = entries.findIndex(x => x.id === e.id);
+        if(idx !== -1) entries[idx].id = data.id;
+      }
+    }
+  }
+}
+
+// Sobrescribir saveProducts para sincronizar
+const _originalSaveProducts = window.saveProducts;
+window.saveProducts = async function() {
+  if(_originalSaveProducts) _originalSaveProducts();
+  if(!currentUser || currentUser.id?.includes('demo-user')) return;
+  
+  try {
+    const uid = currentUser.id;
+    const { data: cloudProducts } = await sb.from('products').select('id').eq('user_id', uid);
+    const cloudIds = new Set((cloudProducts || []).map(p => p.id));
+    const localIds = new Set(products.map(p => p.id));
+    
+    // Eliminar
+    for(const cloudId of cloudIds) {
+      if(!localIds.has(cloudId)) {
+        await sb.from('products').delete().eq('id', cloudId).eq('user_id', uid);
+      }
+    }
+    
+    // Insertar/actualizar
+    for(const p of products) {
+      if(cloudIds.has(p.id)) {
+        await sb.from('products').update({
+          name: p.name,
+          price: p.price
+        }).eq('id', p.id).eq('user_id', uid);
+      } else {
+        const { data, error } = await sb.from('products').insert([{
+          user_id: uid,
+          name: p.name,
+          price: p.price
+        }]).select().single();
+        if(data && !error) {
+          const idx = products.findIndex(x => x.id === p.id);
+          if(idx !== -1) products[idx].id = data.id;
+        }
+      }
+    }
+  } catch(e) {
+    console.error('Error syncing products:', e);
+  }
+};
+
+// Sobrescribir saveClients para sincronizar
+const _originalSaveClients = window.saveClients;
+window.saveClients = async function() {
+  if(_originalSaveClients) _originalSaveClients();
+  if(!currentUser || currentUser.id?.includes('demo-user')) return;
+  
+  try {
+    const uid = currentUser.id;
+    const { data: cloudClients } = await sb.from('clients').select('id').eq('user_id', uid);
+    const cloudIds = new Set((cloudClients || []).map(c => c.id));
+    const localIds = new Set(clients.map(c => c.id));
+    
+    // Eliminar
+    for(const cloudId of cloudIds) {
+      if(!localIds.has(cloudId)) {
+        await sb.from('clients').delete().eq('id', cloudId).eq('user_id', uid);
+      }
+    }
+    
+    // Insertar/actualizar
+    for(const c of clients) {
+      if(cloudIds.has(c.id)) {
+        await sb.from('clients').update({
+          name: c.name,
+          phone: c.phone || null
+        }).eq('id', c.id).eq('user_id', uid);
+      } else {
+        const { data, error } = await sb.from('clients').insert([{
+          user_id: uid,
+          name: c.name,
+          phone: c.phone || null
+        }]).select().single();
+        if(data && !error) {
+          const idx = clients.findIndex(x => x.id === c.id);
+          if(idx !== -1) clients[idx].id = data.id;
+        }
+      }
+    }
+  } catch(e) {
+    console.error('Error syncing clients:', e);
+  }
 };
 
 // ══ CERRAR SESIÓN ══
 async function handleLogout(){
-  if(!confirm('¿Cerrar sesión?'))return;
-  try{
-    // Si es usuario demo, solo limpiar
-    if(currentUser?.id?.includes('demo-user')){
-      currentUser=null;
-      entries=[];products=[];clients=[];
-      document.getElementById('authScreen').style.display='flex';
-      document.getElementById('app').style.display='none';
-      toast('✓ Sesión demo cerrada');
+  if(!confirm('¿Cerrar sesión?')) return;
+  
+  try {
+    // Si es demo, solo limpiar y recargar
+    if(currentUser?.id?.includes('demo-user')) {
+      currentUser = null;
+      entries = []; products = []; clients = [];
+      window.location.reload();
       return;
     }
     
-    // Usuario normal - cerrar sesión en Supabase
-    toast('Cerrando sesión...');
+    // Limpiar localStorage primero
+    localStorage.removeItem('kajita_v4');
+    localStorage.removeItem('kajita_products');
+    localStorage.removeItem('kajita_clients');
+    localStorage.removeItem('kajita_suppliers');
+    
+    // Cerrar sesión en Supabase
     await sb.auth.signOut();
-    // Esperar un momento para que signOut complete
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
-  }catch(e){
+    
+    // Forzar recarga inmediata
+    window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+  } catch(e) {
     console.error('Logout error:', e);
-    toast('✗ Error al cerrar sesión');
-    // Intentar recargar de todos modos
-    setTimeout(() => window.location.reload(), 1000);
+    // Forzar recarga aunque haya error
+    window.location.reload();
   }
 }
 
-console.log('✓ Kajita con Login');
+console.log('✓ Kajita Sync v3.0');
 </script>
 </body>
 </html>
