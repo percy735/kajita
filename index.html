@@ -969,9 +969,12 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
 .onb-overlay {
   position: fixed; inset: 0; z-index: 99990;
   background: #0A0B0E;
-  display: flex; align-items: center; justify-content: center;
+  display: none; align-items: center; justify-content: center;
   padding: 24px 20px;
   transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.onb-overlay.show {
+  display: flex;
 }
 .onb-overlay.hiding {
   opacity: 0; transform: scale(1.04); pointer-events: none;
@@ -1572,7 +1575,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.1-TIMEFIX</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.2-FLOW</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -3197,9 +3200,12 @@ function checkOnboarding() {
   if(bizProfile) {
     // Ya configurado — ocultar overlay y aplicar perfil
     document.getElementById('onbOverlay').style.display = 'none';
+    document.getElementById('onbOverlay').classList.remove('show');
     applyBizProfile();
   } else {
     // Primera vez — mostrar onboarding
+    document.getElementById('onbOverlay').classList.add('show');
+    document.getElementById('onbOverlay').style.display = 'flex';
     document.getElementById('onbFill').style.width = '10%';
     // Enter en el campo nombre avanza al siguiente paso
     document.getElementById('onbBizName').addEventListener('keydown', e => {
