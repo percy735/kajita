@@ -1575,7 +1575,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.3-PRINT</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.4-PROFILE</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -3084,7 +3084,7 @@ function cfgSelectRubro(btn, rubro) {
   }
 }
 
-function saveSettings() {
+async function saveSettings() {
   const name = document.getElementById('cfgBizName').value.trim();
   const customRubro = document.getElementById('cfgCustomRubro').value.trim();
   const isCustomOpen = document.getElementById('cfgCustomWrap').classList.contains('show');
@@ -3104,6 +3104,18 @@ function saveSettings() {
 
   bizProfile = { ...bizProfile, name, rubro };
   localStorage.setItem('kajita_biz', JSON.stringify(bizProfile));
+
+  // Guardar en Supabase
+  if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+    try {
+      await sb.from('profiles').upsert([{
+        id: currentUser.id,
+        business_name: name,
+        business_rubro: rubro
+      }]);
+    } catch(e) { console.error('Error saving profile:', e); }
+  }
+
   applyBizProfile();
   closeSettings();
   toast('✅ Configuración guardada');
@@ -3164,13 +3176,26 @@ function onbValidate2() {
   document.getElementById('onbBtn2').disabled = onbSelectedRubro.length < 2;
 }
 
-function onbFinish() {
+async function onbFinish() {
   const name  = document.getElementById('onbBizName').value.trim();
   const rubro = onbSelectedRubro;
   if(!name || !rubro) return;
 
   bizProfile = { name, rubro, createdAt: new Date().toISOString() };
   localStorage.setItem('kajita_biz', JSON.stringify(bizProfile));
+
+  // Guardar en Supabase si hay usuario logueado
+  if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+    try {
+      await sb.from('profiles').upsert([{
+        id: currentUser.id,
+        business_name: name,
+        business_rubro: rubro
+      }]);
+    } catch(e) {
+      console.error('Error saving profile:', e);
+    }
+  }
 
   // Animación de salida
   document.getElementById('onbFill').style.width = '100%';
@@ -4450,6 +4475,17 @@ async function loadDB(){
   const uid=currentUser.id;
   
   try{
+    // Cargar perfil del negocio desde Supabase
+    const{data:profile}=await sb.from('profiles').select('business_name,business_rubro').eq('id',uid).single();
+    if(profile && profile.business_name){
+      bizProfile = { 
+        name: profile.business_name, 
+        rubro: profile.business_rubro || '',
+        createdAt: bizProfile?.createdAt || new Date().toISOString()
+      };
+      localStorage.setItem('kajita_biz', JSON.stringify(bizProfile));
+    }
+
     const{data:e}=await sb.from('entries').select('*').eq('user_id',uid).order('date',{ascending:false});
     if(e)entries=e.map(x=>({id:x.id,type:x.type,desc:x.description,amount:parseFloat(x.amount),pay:x.payment_type,date:x.date,time:x.time,credit:x.is_credit,client:x.client_name||'',paid:x.is_paid}));
     
