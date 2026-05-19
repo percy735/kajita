@@ -1572,7 +1572,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v2.1-LIMA</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v2.2-LIMA</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -2579,15 +2579,19 @@ function calNav(dir) {
   renderCalendar();
 }
 function calGoToday() {
-  const limaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
-  const iso = limaDate.toISOString().split('T')[0];
+  const now = new Date();
+  const limaOffset = -5 * 60;
+  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
+  const iso = limaTime.toISOString().split('T')[0];
   closeCalendar();
   selectDay(iso);
 }
 function renderCalendar() {
-  // Usar zona horaria de Lima
-  const limaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
-  const today = limaDate.toISOString().split('T')[0];
+  // Calcular fecha de Lima (UTC-5)
+  const now = new Date();
+  const limaOffset = -5 * 60;
+  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
+  const today = limaTime.toISOString().split('T')[0];
   const lbl = new Date(calYear, calMonth, 1)
     .toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
   document.getElementById('calMonthLbl').textContent =
@@ -3193,8 +3197,10 @@ function jumpToEntry(id) {
 
 function init() {
   // Usar zona horaria de Lima, Perú (UTC-5)
-  const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
-  activeDay = today.toISOString().split('T')[0];
+  const now = new Date();
+  const limaOffset = -5 * 60; // Lima es UTC-5
+  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
+  activeDay = limaTime.toISOString().split('T')[0];
   buildDayBar(); render();
   checkOnboarding();
 }
@@ -3202,14 +3208,16 @@ function init() {
 function buildDayBar() {
   const strip = document.getElementById('dateStrip');
   if(!strip) return;
-  // Usar zona horaria de Lima, Perú
-  const limaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
-  const today = limaDate.toISOString().split('T')[0];
+  // Calcular fecha de Lima (UTC-5)
+  const now = new Date();
+  const limaOffset = -5 * 60;
+  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
+  const today = limaTime.toISOString().split('T')[0];
   const days = [];
-  // Solo mostrar desde 29 días atrás hasta HOY (no días futuros)
+  // Solo mostrar desde 29 días atrás hasta HOY
   for(let i=29;i>=0;i--){
-    const d = new Date(limaDate);
-    d.setDate(limaDate.getDate()-i);
+    const d = new Date(limaTime);
+    d.setDate(limaTime.getDate()-i);
     days.push(d.toISOString().split('T')[0]);
   }
   const activeIdx = days.indexOf(activeDay);
@@ -3247,9 +3255,11 @@ function buildDayBar() {
 }
 
 function selectDay(iso){
-  // Usar zona horaria de Lima para validar
-  const limaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
-  const today = limaDate.toISOString().split('T')[0];
+  // Calcular fecha de Lima (UTC-5)
+  const now = new Date();
+  const limaOffset = -5 * 60;
+  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
+  const today = limaTime.toISOString().split('T')[0];
   // No permitir seleccionar días futuros
   if(iso > today) {
     toast('⚠️ No puedes seleccionar días futuros');
