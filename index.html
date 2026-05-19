@@ -1572,7 +1572,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v2.2-LIMA</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v2.3-LOCAL</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -2580,18 +2580,20 @@ function calNav(dir) {
 }
 function calGoToday() {
   const now = new Date();
-  const limaOffset = -5 * 60;
-  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
-  const iso = limaTime.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const iso = `${year}-${month}-${day}`;
   closeCalendar();
   selectDay(iso);
 }
 function renderCalendar() {
-  // Calcular fecha de Lima (UTC-5)
+  // Usar fecha local del sistema
   const now = new Date();
-  const limaOffset = -5 * 60;
-  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
-  const today = limaTime.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const today = `${year}-${month}-${day}`;
   const lbl = new Date(calYear, calMonth, 1)
     .toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
   document.getElementById('calMonthLbl').textContent =
@@ -3196,11 +3198,12 @@ function jumpToEntry(id) {
 }
 
 function init() {
-  // Usar zona horaria de Lima, Perú (UTC-5)
-  const now = new Date();
-  const limaOffset = -5 * 60; // Lima es UTC-5
-  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
-  activeDay = limaTime.toISOString().split('T')[0];
+  // Usar la fecha local del sistema (lo que muestra el calendario de Windows)
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  activeDay = `${year}-${month}-${day}`;
   buildDayBar(); render();
   checkOnboarding();
 }
@@ -3208,17 +3211,21 @@ function init() {
 function buildDayBar() {
   const strip = document.getElementById('dateStrip');
   if(!strip) return;
-  // Calcular fecha de Lima (UTC-5)
+  // Usar fecha local del sistema
   const now = new Date();
-  const limaOffset = -5 * 60;
-  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
-  const today = limaTime.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const today = `${year}-${month}-${day}`;
   const days = [];
   // Solo mostrar desde 29 días atrás hasta HOY
   for(let i=29;i>=0;i--){
-    const d = new Date(limaTime);
-    d.setDate(limaTime.getDate()-i);
-    days.push(d.toISOString().split('T')[0]);
+    const d = new Date(now);
+    d.setDate(now.getDate()-i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dy = String(d.getDate()).padStart(2, '0');
+    days.push(`${y}-${m}-${dy}`);
   }
   const activeIdx = days.indexOf(activeDay);
 
@@ -3255,11 +3262,12 @@ function buildDayBar() {
 }
 
 function selectDay(iso){
-  // Calcular fecha de Lima (UTC-5)
+  // Usar fecha local del sistema
   const now = new Date();
-  const limaOffset = -5 * 60;
-  const limaTime = new Date(now.getTime() + (now.getTimezoneOffset() + limaOffset) * 60000);
-  const today = limaTime.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const today = `${year}-${month}-${day}`;
   // No permitir seleccionar días futuros
   if(iso > today) {
     toast('⚠️ No puedes seleccionar días futuros');
