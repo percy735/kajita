@@ -1572,7 +1572,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v3.0-SYNC</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.0-NATIVO</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -2155,20 +2155,48 @@ function switchCatTab(tab) {
   renderCatalog();
 }
 
-function addProduct() {
+async function addProduct() {
   const name  = document.getElementById('cpName').value.trim();
   const price = parseFloat(document.getElementById('cpPrice').value);
   if(!name)           { toast('Escribe el nombre del producto'); return; }
   if(!price||price<=0){ toast('Ingresa un precio válido'); return; }
   if(editingProductId !== null) {
     const p = products.find(x=>x.id===editingProductId);
-    if(p){ p.name=name; p.price=price; }
+    if(p){ 
+      p.name=name; p.price=price; 
+      // Sync con Supabase
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof editingProductId === 'string' && editingProductId.length === 36) {
+        try {
+          await sb.from('products').update({name, price}).eq('id', editingProductId).eq('user_id', currentUser.id);
+        } catch(e) { console.error('Error updating product:', e); }
+      }
+    }
     editingProductId = null;
     document.getElementById('cat-add-btn-prod').textContent = '+ Agregar';
     document.getElementById('cat-cancel-prod').style.display = 'none';
     toast('Producto actualizado');
   } else {
-    products.unshift({ id: Date.now(), name, price });
+    let newId = Date.now();
+    if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+      try {
+        const {data, error} = await sb.from('products').insert([{
+          user_id: currentUser.id,
+          name: name,
+          price: price
+        }]).select().single();
+        if(error) {
+          console.error('Error creating product:', error);
+          toast('✗ Error: ' + error.message);
+          return;
+        }
+        newId = data.id;
+      } catch(e) {
+        console.error('Error:', e);
+        toast('✗ Error al crear producto');
+        return;
+      }
+    }
+    products.unshift({ id: newId, name, price });
     toast('Producto agregado');
   }
   saveProducts(); document.getElementById('cpName').value  = ''; document.getElementById('cpPrice').value = '';
@@ -2197,31 +2225,72 @@ function delProduct(id) {
   showConfirm({
     icon: '📦', title: '¿Eliminar producto?',
     desc: `<strong>${p.name}</strong> — S/${p.price.toFixed(2)}<br>Esta acción no se puede deshacer.`,
-    onConfirm: () => {
+    onConfirm: async () => {
       if(editingProductId===id) cancelEditProduct();
+      
+      // Sync con Supabase
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof id === 'string' && id.length === 36) {
+        try {
+          await sb.from('products').delete().eq('id', id).eq('user_id', currentUser.id);
+        } catch(e) { console.error('Error deleting product:', e); }
+      }
+      
       products = products.filter(x=>x.id!==id);
       saveProducts(); renderCatalog(); renderProductChips(); toast('Producto eliminado');
     }
   });
 }
 
-function addClient() {
+async function addClient() {
   const name  = document.getElementById('ccName').value.trim();
   const phone = document.getElementById('ccPhone').value.trim();
   if(!name){ toast('Escribe el nombre del cliente'); return; }
   if(editingClientId !== null) {
     const c = clients.find(x=>x.id===editingClientId);
-    if(c){ c.name=name; c.phone=phone; }
+    if(c){ 
+      c.name=name; 
+      c.phone=phone; 
+      // Sync con Supabase
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof editingClientId === 'string' && editingClientId.length === 36) {
+        try {
+          await sb.from('clients').update({name, phone: phone || null}).eq('id', editingClientId).eq('user_id', currentUser.id);
+        } catch(e) { console.error('Error updating client:', e); }
+      }
+    }
     editingClientId = null;
     document.getElementById('cat-add-btn-cli').textContent = '+ Agregar';
     document.getElementById('cat-cancel-cli').style.display = 'none';
     toast('Cliente actualizado');
   } else {
-    clients.unshift({ id: Date.now(), name, phone });
+    let newId = Date.now();
+    // Crear en Supabase primero
+    if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+      try {
+        const {data, error} = await sb.from('clients').insert([{
+          user_id: currentUser.id,
+          name: name,
+          phone: phone || null
+        }]).select().single();
+        if(error) {
+          console.error('Error creating client:', error);
+          toast('✗ Error: ' + error.message);
+          return;
+        }
+        newId = data.id;
+      } catch(e) {
+        console.error('Error:', e);
+        toast('✗ Error al crear cliente');
+        return;
+      }
+    }
+    clients.unshift({ id: newId, name, phone });
     toast('Cliente agregado');
   }
-  saveClients(); document.getElementById('ccName').value  = ''; document.getElementById('ccPhone').value = '';
-  renderCatalog(); renderClientDropdown();
+  saveClients(); 
+  document.getElementById('ccName').value  = ''; 
+  document.getElementById('ccPhone').value = '';
+  renderCatalog(); 
+  renderClientDropdown();
 }
 
 function editClient(id) {
@@ -2246,8 +2315,16 @@ function delClient(id) {
   showConfirm({
     icon: '👤', title: '¿Eliminar cliente?',
     desc: `<strong>${c.name}</strong><br>Se perderá su historial en el panel. Esta acción no se puede deshacer.`,
-    onConfirm: () => {
+    onConfirm: async () => {
       if(editingClientId===id) cancelEditClient();
+      
+      // Sync con Supabase
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof id === 'string' && id.length === 36) {
+        try {
+          await sb.from('clients').delete().eq('id', id).eq('user_id', currentUser.id);
+        } catch(e) { console.error('Error deleting client:', e); }
+      }
+      
       clients = clients.filter(x=>x.id!==id);
       saveClients(); renderCatalog(); renderClientDropdown(); toast('Cliente eliminado');
     }
@@ -2707,22 +2784,77 @@ function deletePanelItem(type, id) {
     icon: icons[type],
     title: `¿Eliminar ${names[type]}?`,
     desc: `<strong>${item.name}</strong><br>Esta acción no se puede deshacer.`,
-    onConfirm: () => {
-      if(type==='cli')  { clients=clients.filter(x=>x.id!==id);   saveClients();   renderCliPanel();  renderClientDropdown(); }
-      if(type==='prov') { suppliers=suppliers.filter(x=>x.id!==id); saveSuppliers(); renderProvPanel(); renderSupplierDropdown(); }
-      if(type==='inv')  { products=products.filter(x=>x.id!==id);  saveProducts();  renderInvPanel();  renderCatalog(); }
+    onConfirm: async () => {
+      // Sync con Supabase
+      const isCloudId = typeof id === 'string' && id.length === 36;
+      const isLoggedIn = typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
+      
+      if(type==='cli')  { 
+        if(isCloudId && isLoggedIn) {
+          try { await sb.from('clients').delete().eq('id', id).eq('user_id', currentUser.id); } 
+          catch(e) { console.error('Error:', e); }
+        }
+        clients=clients.filter(x=>x.id!==id);   
+        saveClients();   renderCliPanel();  renderClientDropdown(); 
+      }
+      if(type==='prov') { 
+        suppliers=suppliers.filter(x=>x.id!==id); 
+        saveSuppliers(); renderProvPanel(); renderSupplierDropdown(); 
+      }
+      if(type==='inv')  { 
+        if(isCloudId && isLoggedIn) {
+          try { await sb.from('products').delete().eq('id', id).eq('user_id', currentUser.id); } 
+          catch(e) { console.error('Error:', e); }
+        }
+        products=products.filter(x=>x.id!==id);  
+        saveProducts();  renderInvPanel();  renderCatalog(); 
+      }
       toast('Eliminado');
     }
   });
 }
 
-function savePanelClient() {
+async function savePanelClient() {
   const name=document.getElementById('pfCliName').value.trim();
   const phone=document.getElementById('pfCliPhone').value.trim();
   if(!name){ document.getElementById('pfCliName').focus(); return; }
   const id=_panelEditId.cli;
-  if(id!==null){ const c=clients.find(x=>x.id===id); if(c){c.name=name;c.phone=phone;} toast('Cliente actualizado'); }
-  else { clients.unshift({id:Date.now(),name,phone}); toast('Cliente agregado'); }
+  const isLoggedIn = typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
+  
+  if(id!==null){ 
+    const c=clients.find(x=>x.id===id); 
+    if(c){
+      c.name=name; c.phone=phone;
+      if(isLoggedIn && typeof id === 'string' && id.length === 36) {
+        try { await sb.from('clients').update({name, phone: phone || null}).eq('id', id).eq('user_id', currentUser.id); }
+        catch(e) { console.error('Error:', e); }
+      }
+    } 
+    toast('Cliente actualizado'); 
+  }
+  else { 
+    let newId = Date.now();
+    if(isLoggedIn) {
+      try {
+        const {data, error} = await sb.from('clients').insert([{
+          user_id: currentUser.id,
+          name: name,
+          phone: phone || null
+        }]).select().single();
+        if(error) {
+          toast('✗ Error: ' + error.message);
+          return;
+        }
+        newId = data.id;
+      } catch(e) {
+        console.error('Error:', e);
+        toast('✗ Error al guardar');
+        return;
+      }
+    }
+    clients.unshift({id: newId, name, phone}); 
+    toast('Cliente agregado'); 
+  }
   saveClients(); cancelPanelForm('cli'); renderCliPanel(); renderClientDropdown();
 }
 
@@ -2736,13 +2868,47 @@ function savePanelSupplier() {
   saveSuppliers(); cancelPanelForm('prov'); renderProvPanel(); renderSupplierDropdown();
 }
 
-function savePanelProduct() {
+async function savePanelProduct() {
   const name=document.getElementById('pfInvName').value.trim();
   const price=parseFloat(document.getElementById('pfInvPrice').value)||0;
   if(!name){ document.getElementById('pfInvName').focus(); return; }
   const id=_panelEditId.inv;
-  if(id!==null){ const p=products.find(x=>x.id===id); if(p){p.name=name;p.price=price;} toast('Producto actualizado'); }
-  else { products.unshift({id:Date.now(),name,price}); toast('Producto agregado'); }
+  const isLoggedIn = typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
+  
+  if(id!==null){ 
+    const p=products.find(x=>x.id===id); 
+    if(p){
+      p.name=name; p.price=price;
+      if(isLoggedIn && typeof id === 'string' && id.length === 36) {
+        try { await sb.from('products').update({name, price}).eq('id', id).eq('user_id', currentUser.id); }
+        catch(e) { console.error('Error:', e); }
+      }
+    } 
+    toast('Producto actualizado'); 
+  }
+  else { 
+    let newId = Date.now();
+    if(isLoggedIn) {
+      try {
+        const {data, error} = await sb.from('products').insert([{
+          user_id: currentUser.id,
+          name: name,
+          price: price
+        }]).select().single();
+        if(error) {
+          toast('✗ Error: ' + error.message);
+          return;
+        }
+        newId = data.id;
+      } catch(e) {
+        console.error('Error:', e);
+        toast('✗ Error al guardar');
+        return;
+      }
+    }
+    products.unshift({id: newId, name, price}); 
+    toast('Producto agregado'); 
+  }
   saveProducts(); cancelPanelForm('inv'); renderInvPanel(); renderCatalog();
 }
 
@@ -3376,7 +3542,7 @@ function renderPendingExpanded() {
   `).join('');
 }
 
-function submitEntry(){
+async function submitEntry(){
   const desc     = document.getElementById('iDesc').value.trim();
   const amount   = parseFloat(document.getElementById('iAmt').value);
   const qty      = parseInt(document.getElementById('iQty').value)||null;
@@ -3389,40 +3555,123 @@ function submitEntry(){
   if(credit&&!client){toast('Escribe el nombre del cliente');return;}
 
   const isIncome = cType==='income';
+  const isCredit = credit && isIncome;
+  const payment = isCredit ? 'credit' : cPay;
+  const time = new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
 
   if(editId!==null){
+    // EDITAR existente
     const idx=entries.findIndex(e=>e.id===editId);
-    if(idx!==-1) entries[idx]={
-      ...entries[idx],
-      type:cType, desc, amount, qty, unitPrice,
-      pay: credit && isIncome ? 'credit' : cPay,
-      date,
-      credit: credit && isIncome,
-      client: client,
-      paid: credit && isIncome ? entries[idx].paid : undefined
-    };
-    toast('Movimiento actualizado'); cancelEdit();
+    if(idx!==-1) {
+      entries[idx]={
+        ...entries[idx],
+        type:cType, desc, amount, qty, unitPrice,
+        pay: payment,
+        date,
+        credit: isCredit,
+        client: client,
+        paid: isCredit ? entries[idx].paid : undefined
+      };
+      
+      // Sync con Supabase si está logueado y tiene UUID
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof editId === 'string' && editId.length === 36) {
+        try {
+          await sb.from('entries').update({
+            type: cType,
+            description: desc,
+            amount: amount,
+            payment_type: payment,
+            date: date,
+            is_credit: isCredit,
+            client_name: client || null,
+            is_paid: entries[idx].paid || false
+          }).eq('id', editId).eq('user_id', currentUser.id);
+        } catch(e) {
+          console.error('Error updating in Supabase:', e);
+        }
+      }
+    }
+    toast('✓ Movimiento actualizado'); 
+    cancelEdit();
   } else {
+    // CREAR nuevo
+    let newId = Date.now(); // ID temporal local
+    
+    // Si hay usuario logueado real, crear primero en Supabase
+    if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+      try {
+        const { data, error } = await sb.from('entries').insert([{
+          user_id: currentUser.id,
+          type: cType,
+          description: desc,
+          amount: amount,
+          payment_type: payment,
+          date: date,
+          time: time,
+          is_credit: isCredit,
+          client_name: client || null,
+          is_paid: false
+        }]).select().single();
+        
+        if(error) {
+          console.error('Supabase error:', error);
+          toast('✗ Error al guardar: ' + error.message);
+          return;
+        }
+        
+        // Usar UUID de Supabase como ID
+        newId = data.id;
+      } catch(e) {
+        console.error('Error creating entry:', e);
+        toast('✗ Error: ' + e.message);
+        return;
+      }
+    }
+    
+    // Agregar a memoria con el ID correcto
     entries.unshift({
-      id:Date.now(), type:cType, desc, amount, qty, unitPrice,
-      pay: credit && isIncome ? 'credit' : cPay,
-      date, time:new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}),
-      credit: credit && isIncome,
+      id: newId, 
+      type: cType, desc, amount, qty, unitPrice,
+      pay: payment,
+      date, 
+      time: time,
+      credit: isCredit,
       client: client,
       paid: false
     });
-    document.getElementById('iDesc').value=''; document.getElementById('iAmt').value='';
-    document.getElementById('iQty').value=''; document.getElementById('iUnitPrice').value='';
-    document.getElementById('iClient').value=''; document.getElementById('iCredit').checked=false;
+    
+    // Limpiar formulario
+    document.getElementById('iDesc').value=''; 
+    document.getElementById('iAmt').value='';
+    document.getElementById('iQty').value=''; 
+    document.getElementById('iUnitPrice').value='';
+    document.getElementById('iClient').value=''; 
+    document.getElementById('iCredit').checked=false;
     onCreditToggle();
-    toast(credit&&isIncome ? '⏳ Venta a crédito registrada':(isIncome?'Ingreso registrado':'Egreso registrado'));
+    toast(isCredit ? '⏳ Venta a crédito registrada':(isIncome?'✓ Ingreso registrado':'✓ Egreso registrado'));
   }
-  save(); buildDayBar(); render();
+  save(); 
+  buildDayBar(); 
+  render();
 }
 
-function cobrarEntry(id){
+async function cobrarEntry(id){
   const e=entries.find(x=>x.id===id); if(!e) return;
   e.paid=true; e.credit=false; e.pay='cash'; e.paidAt=new Date().toISOString();
+  
+  // Sync con Supabase
+  if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof id === 'string' && id.length === 36) {
+    try {
+      await sb.from('entries').update({
+        is_credit: false,
+        is_paid: true,
+        payment_type: 'cash'
+      }).eq('id', id).eq('user_id', currentUser.id);
+    } catch(err) {
+      console.error('Error in cobrarEntry:', err);
+    }
+  }
+  
   save(); render(); buildDayBar(); toast('✓ Cobrado — ya suma al balance');
 }
 
@@ -3455,8 +3704,18 @@ function delEntry(id){
     icon: e.type==='expense' ? '💸' : '💰',
     title: '¿Eliminar movimiento?',
     desc: `<strong>${e.desc}</strong><br>${sign} ${fmt(e.amount)} — Esta acción no se puede deshacer.`,
-    onConfirm: () => {
+    onConfirm: async () => {
       if(editId===id) cancelEdit();
+      
+      // Sync con Supabase
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof id === 'string' && id.length === 36) {
+        try {
+          await sb.from('entries').delete().eq('id', id).eq('user_id', currentUser.id);
+        } catch(err) {
+          console.error('Error deleting:', err);
+        }
+      }
+      
       entries = entries.filter(x=>x.id!==id);
       save(); buildDayBar(); render();
       toast('Movimiento eliminado');
@@ -4007,7 +4266,7 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'),2400);
 }
 
-init();
+// init() ahora se llama después de la autenticación
 </script>
 
 <!-- ══════════════════════════════════════════════════════════════ -->
@@ -4017,8 +4276,8 @@ init();
 <script>
 const SUPABASE_URL='https://xdjqawfikdlxxelabetg.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkanFhd2Zpa2RseHhlbGFiZXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDYwMTAsImV4cCI6MjA5NDUyMjAxMH0.h_-97MAKlbrCaFJQbLzQgRa9X33GgbpxuXEuqHhOGOo';
-const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let currentUser=null;
+var sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+var currentUser = null;
 
 // ══ FUNCIONES DE AUTENTICACIÓN ══
 async function handleDemoLogin(){
@@ -4212,200 +4471,49 @@ setInterval(()=>{
   }
 }, 30000); // 30 segundos
 
-// ══════════════════════════════════════════════════════════════
-// SISTEMA DE SINCRONIZACIÓN CON SUPABASE (Versión limpia)
-// ══════════════════════════════════════════════════════════════
-
-// Guardar TODO en Supabase cuando se llame a save()
-const _originalSave = window.save;
-window.save = async function() {
-  // Guardar local también (backup)
-  if(_originalSave) _originalSave();
-  
-  // Sincronizar con Supabase
-  if(!currentUser || currentUser.id?.includes('demo-user')) return;
-  
-  try {
-    // Sincronizar ENTRIES (movimientos)
-    await syncEntries();
-  } catch(e) {
-    console.error('Error syncing entries:', e);
-  }
-};
-
-// Función para sincronizar movimientos
-async function syncEntries() {
-  if(!currentUser) return;
-  const uid = currentUser.id;
-  
-  // Obtener entries actuales de Supabase
-  const { data: cloudEntries } = await sb.from('entries').select('id').eq('user_id', uid);
-  const cloudIds = new Set((cloudEntries || []).map(e => e.id));
-  const localIds = new Set(entries.map(e => e.id));
-  
-  // Eliminar de Supabase los que ya no están localmente
-  for(const cloudId of cloudIds) {
-    if(!localIds.has(cloudId)) {
-      await sb.from('entries').delete().eq('id', cloudId).eq('user_id', uid);
-    }
-  }
-  
-  // Insertar/actualizar los locales en Supabase
-  for(const e of entries) {
-    if(cloudIds.has(e.id)) {
-      // Actualizar
-      await sb.from('entries').update({
-        type: e.type,
-        description: e.desc,
-        amount: e.amount,
-        payment_type: e.pay,
-        date: e.date,
-        time: e.time,
-        is_credit: e.credit || false,
-        client_name: e.client || null,
-        is_paid: e.paid || false
-      }).eq('id', e.id).eq('user_id', uid);
-    } else {
-      // Insertar nuevo (con id auto-generado, ignorando el id local)
-      const { data, error } = await sb.from('entries').insert([{
-        user_id: uid,
-        type: e.type,
-        description: e.desc,
-        amount: e.amount,
-        payment_type: e.pay,
-        date: e.date,
-        time: e.time,
-        is_credit: e.credit || false,
-        client_name: e.client || null,
-        is_paid: e.paid || false
-      }]).select().single();
-      if(data && !error) {
-        // Actualizar el ID local con el de Supabase
-        const idx = entries.findIndex(x => x.id === e.id);
-        if(idx !== -1) entries[idx].id = data.id;
-      }
-    }
-  }
-}
-
-// Sobrescribir saveProducts para sincronizar
-const _originalSaveProducts = window.saveProducts;
-window.saveProducts = async function() {
-  if(_originalSaveProducts) _originalSaveProducts();
-  if(!currentUser || currentUser.id?.includes('demo-user')) return;
-  
-  try {
-    const uid = currentUser.id;
-    const { data: cloudProducts } = await sb.from('products').select('id').eq('user_id', uid);
-    const cloudIds = new Set((cloudProducts || []).map(p => p.id));
-    const localIds = new Set(products.map(p => p.id));
-    
-    // Eliminar
-    for(const cloudId of cloudIds) {
-      if(!localIds.has(cloudId)) {
-        await sb.from('products').delete().eq('id', cloudId).eq('user_id', uid);
-      }
-    }
-    
-    // Insertar/actualizar
-    for(const p of products) {
-      if(cloudIds.has(p.id)) {
-        await sb.from('products').update({
-          name: p.name,
-          price: p.price
-        }).eq('id', p.id).eq('user_id', uid);
-      } else {
-        const { data, error } = await sb.from('products').insert([{
-          user_id: uid,
-          name: p.name,
-          price: p.price
-        }]).select().single();
-        if(data && !error) {
-          const idx = products.findIndex(x => x.id === p.id);
-          if(idx !== -1) products[idx].id = data.id;
-        }
-      }
-    }
-  } catch(e) {
-    console.error('Error syncing products:', e);
-  }
-};
-
-// Sobrescribir saveClients para sincronizar
-const _originalSaveClients = window.saveClients;
-window.saveClients = async function() {
-  if(_originalSaveClients) _originalSaveClients();
-  if(!currentUser || currentUser.id?.includes('demo-user')) return;
-  
-  try {
-    const uid = currentUser.id;
-    const { data: cloudClients } = await sb.from('clients').select('id').eq('user_id', uid);
-    const cloudIds = new Set((cloudClients || []).map(c => c.id));
-    const localIds = new Set(clients.map(c => c.id));
-    
-    // Eliminar
-    for(const cloudId of cloudIds) {
-      if(!localIds.has(cloudId)) {
-        await sb.from('clients').delete().eq('id', cloudId).eq('user_id', uid);
-      }
-    }
-    
-    // Insertar/actualizar
-    for(const c of clients) {
-      if(cloudIds.has(c.id)) {
-        await sb.from('clients').update({
-          name: c.name,
-          phone: c.phone || null
-        }).eq('id', c.id).eq('user_id', uid);
-      } else {
-        const { data, error } = await sb.from('clients').insert([{
-          user_id: uid,
-          name: c.name,
-          phone: c.phone || null
-        }]).select().single();
-        if(data && !error) {
-          const idx = clients.findIndex(x => x.id === c.id);
-          if(idx !== -1) clients[idx].id = data.id;
-        }
-      }
-    }
-  } catch(e) {
-    console.error('Error syncing clients:', e);
-  }
-};
-
 // ══ CERRAR SESIÓN ══
-async function handleLogout(){
+async function handleLogout() {
   if(!confirm('¿Cerrar sesión?')) return;
   
+  const wasDemo = currentUser?.id?.includes('demo-user');
+  
+  // Limpiar localStorage
   try {
-    // Si es demo, solo limpiar y recargar
-    if(currentUser?.id?.includes('demo-user')) {
-      currentUser = null;
-      entries = []; products = []; clients = [];
-      window.location.reload();
-      return;
-    }
-    
-    // Limpiar localStorage primero
     localStorage.removeItem('kajita_v4');
     localStorage.removeItem('kajita_products');
     localStorage.removeItem('kajita_clients');
     localStorage.removeItem('kajita_suppliers');
-    
-    // Cerrar sesión en Supabase
-    await sb.auth.signOut();
-    
-    // Forzar recarga inmediata
-    window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
-  } catch(e) {
-    console.error('Logout error:', e);
-    // Forzar recarga aunque haya error
+    localStorage.removeItem('kajita_biz_name');
+    localStorage.removeItem('kajita_biz_industry');
+    localStorage.removeItem('kajita_onboarded');
+  } catch(e) {}
+  
+  // Limpiar memoria
+  currentUser = null;
+  entries = [];
+  products = [];
+  clients = [];
+  
+  // Si era demo, solo recargar
+  if(wasDemo) {
     window.location.reload();
+    return;
   }
+  
+  // Cerrar sesión en Supabase
+  try {
+    if(typeof sb !== 'undefined') {
+      await sb.auth.signOut();
+    }
+  } catch(e) {
+    console.error('SignOut error:', e);
+  }
+  
+  // Forzar recarga con parametro único para evitar caché
+  window.location.href = window.location.pathname + '?logout=' + Date.now();
 }
 
-console.log('✓ Kajita Sync v3.0');
+console.log('✓ Kajita Sync v5.0 - Funciones nativas');
 </script>
 </body>
 </html>
