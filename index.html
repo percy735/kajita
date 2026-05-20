@@ -1575,7 +1575,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.4-PROFILE</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.5-FINAL</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -4325,9 +4325,15 @@ async function handleDemoLogin(){
     document.getElementById('authScreen').style.display='none';
     document.getElementById('app').style.display='block';
     
-    // Cargar datos demo si existen, sino empezar vacío
-    await loadDB();
-    init();
+    // Demo: poner bizProfile directo sin Supabase
+    bizProfile = { name: 'Demo - Prueba Kajita', rubro: 'Servicios', createdAt: new Date().toISOString() };
+    const today = new Date();
+    activeDay = today.getFullYear() + '-' +
+      String(today.getMonth()+1).padStart(2,'0') + '-' +
+      String(today.getDate()).padStart(2,'0');
+    buildDayBar();
+    render();
+    applyBizProfile();
     
     toast('🚀 Modo Demo - ¡Explora Kajita libremente!');
   }catch(err){
@@ -4402,12 +4408,9 @@ async function handleRegister(e){
       if(profileError)console.error('Profile error:',profileError);
       
       showAuthError('¡Cuenta creada! Entrando...','success');
-      setTimeout(()=>{
+      setTimeout(async()=>{
         currentUser=data.user;
-        document.getElementById('authScreen').style.display='none';
-        document.getElementById('app').style.display='block';
-        loadDB();
-        init();
+        await startApp();
       },1500);
     }
   }catch(err){
@@ -4437,17 +4440,31 @@ function showAuthError(msg,type='error'){
   }
 }
 
+// ══ FUNCIÓN CENTRAL PARA INICIAR APP ══
+async function startApp() {
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  await loadDB();
+  // Setear fecha con la fecha local del sistema
+  const today = new Date();
+  activeDay = today.getFullYear() + '-' +
+    String(today.getMonth()+1).padStart(2,'0') + '-' +
+    String(today.getDate()).padStart(2,'0');
+  buildDayBar();
+  render();
+  checkOnboarding();
+  applyBizProfile();
+}
+
 // ══ LISTENER DE SESIÓN ══
 sb.auth.onAuthStateChange(async(event,session)=>{
   if(event==='SIGNED_IN'&&session){
     currentUser=session.user;
-    document.getElementById('authScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    await loadDB();
-    init();
+    await startApp();
   }else if(event==='SIGNED_OUT'){
     currentUser=null;
     entries=[];products=[];clients=[];
+    bizProfile=null;
     document.getElementById('authScreen').style.display='flex';
     document.getElementById('app').style.display='none';
   }
@@ -4458,10 +4475,7 @@ async function checkAuth(){
   const{data:{session}}=await sb.auth.getSession();
   if(session){
     currentUser=session.user;
-    document.getElementById('authScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    await loadDB();
-    init();
+    await startApp();
   }else{
     document.getElementById('authScreen').style.display='flex';
     document.getElementById('app').style.display='none';
@@ -4495,9 +4509,8 @@ async function loadDB(){
     const{data:c}=await sb.from('clients').select('*').eq('user_id',uid).order('name');
     if(c)clients=c.map(x=>({id:x.id,name:x.name,phone:x.phone||''}));
     
-    console.log('✓ Datos cargados');
-    render();
-  }catch(err){console.error(err);}
+    console.log('✓ Datos cargados - biz:', bizProfile?.name || 'sin perfil');
+  }catch(err){console.error('loadDB error:',err);}
 }
 
 // ══ SINCRONIZACIÓN MANUAL ══
