@@ -1639,7 +1639,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v6.9-CLEAN</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v7.0-DEBUG</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -2899,47 +2899,43 @@ function deletePanelItem(type, id) {
 }
 
 async function savePanelClient() {
-  const name=document.getElementById('pfCliName').value.trim();
-  const phone=document.getElementById('pfCliPhone').value.trim();
-  if(!name){ document.getElementById('pfCliName').focus(); return; }
-  const id=_panelEditId.cli;
-  const isLoggedIn = typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
-  
-  if(id!==null){ 
-    const c=clients.find(x=>String(x.id)===String(id)); 
+  console.log('savePanelClient called, currentUser:', currentUser?.email);
+  const name  = document.getElementById('pfCliName').value.trim();
+  const phone = document.getElementById('pfCliPhone').value.trim();
+  console.log('name:', name);
+  if(!name){ document.getElementById('pfCliName').focus(); toast('Escribe el nombre'); return; }
+
+  const id = _panelEditId.cli;
+  const loggedIn = typeof currentUser !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
+
+  if(id !== null){
+    const c = clients.find(x=>String(x.id)===String(id));
     if(c){
-      c.name=name; c.phone=phone;
-      if(isLoggedIn && id !== null && id !== undefined) {
-        try { await sb.from('clients').update({name, phone: phone || null}).eq('id', id).eq('user_id', currentUser.id); }
-        catch(e) { console.error('Error:', e); }
-      }
-    } 
-    toast('Cliente actualizado'); 
-  }
-  else { 
-    let newId = Date.now();
-    if(isLoggedIn) {
-      try {
-        const {data, error} = await sb.from('clients').insert([{
-          user_id: currentUser.id,
-          name: name,
-          phone: phone || null
-        }]).select().single();
-        if(error) {
-          toast('✗ Error: ' + error.message);
-          return;
-        }
-        newId = data.id;
-      } catch(e) {
-        console.error('Error:', e);
-        toast('✗ Error al guardar');
-        return;
+      c.name = name; c.phone = phone;
+      if(loggedIn){
+        try{ await sb.from('clients').update({name, phone:phone||null}).eq('id',id).eq('user_id',currentUser.id); }
+        catch(e){ console.error('update client error:',e); }
       }
     }
-    clients.unshift({id: newId, name, phone}); 
-    toast('Cliente agregado'); 
+    toast('✓ Cliente actualizado');
+  } else {
+    let newId = 'local-'+Date.now();
+    if(loggedIn){
+      try{
+        const {data,error} = await sb.from('clients').insert([{
+          user_id: currentUser.id, name, phone: phone||null
+        }]).select().single();
+        if(error){ console.error('insert client error:',error); toast('✗ '+error.message); return; }
+        newId = data.id;
+      } catch(e){ console.error('insert client catch:',e); toast('✗ Error al guardar'); return; }
+    }
+    clients.unshift({id:newId, name, phone});
+    toast('✓ Cliente agregado');
   }
-  saveClients(); cancelPanelForm('cli'); renderCliPanel(); renderClientDropdown();
+  try{ saveClients(); } catch(e){}
+  cancelPanelForm('cli');
+  renderCliPanel();
+  try{ renderClientDropdown(); } catch(e){}
 }
 
 function savePanelSupplier() {
@@ -2953,47 +2949,45 @@ function savePanelSupplier() {
 }
 
 async function savePanelProduct() {
-  const name=document.getElementById('pfInvName').value.trim();
-  const price=parseFloat(document.getElementById('pfInvPrice').value)||0;
-  if(!name){ document.getElementById('pfInvName').focus(); return; }
-  const id=_panelEditId.inv;
-  const isLoggedIn = typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
-  
-  if(id!==null){ 
-    const p=products.find(x=>String(x.id)===String(id)); 
+  console.log('savePanelProduct called, currentUser:', currentUser?.email);
+  const name  = document.getElementById('pfInvName').value.trim();
+  const price = parseFloat(document.getElementById('pfInvPrice').value)||0;
+  console.log('name:', name, 'price:', price);
+  if(!name){ document.getElementById('pfInvName').focus(); toast('Escribe el nombre'); return; }
+
+  const id = _panelEditId.inv;
+  const loggedIn = typeof currentUser !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
+
+  if(id !== null){
+    // Editar existente
+    const p = products.find(x=>String(x.id)===String(id));
     if(p){
-      p.name=name; p.price=price;
-      if(isLoggedIn && id !== null && id !== undefined) {
-        try { await sb.from('products').update({name, price}).eq('id', id).eq('user_id', currentUser.id); }
-        catch(e) { console.error('Error:', e); }
-      }
-    } 
-    toast('Producto actualizado'); 
-  }
-  else { 
-    let newId = Date.now();
-    if(isLoggedIn) {
-      try {
-        const {data, error} = await sb.from('products').insert([{
-          user_id: currentUser.id,
-          name: name,
-          price: price
-        }]).select().single();
-        if(error) {
-          toast('✗ Error: ' + error.message);
-          return;
-        }
-        newId = data.id;
-      } catch(e) {
-        console.error('Error:', e);
-        toast('✗ Error al guardar');
-        return;
+      p.name = name; p.price = price;
+      if(loggedIn){
+        try{ await sb.from('products').update({name,price}).eq('id',id).eq('user_id',currentUser.id); }
+        catch(e){ console.error('update product error:',e); }
       }
     }
-    products.unshift({id: newId, name, price}); 
-    toast('Producto agregado'); 
+    toast('✓ Producto actualizado');
+  } else {
+    // Crear nuevo
+    let newId = 'local-'+Date.now();
+    if(loggedIn){
+      try{
+        const {data,error} = await sb.from('products').insert([{
+          user_id: currentUser.id, name, price
+        }]).select().single();
+        if(error){ console.error('insert product error:',error); toast('✗ '+error.message); return; }
+        newId = data.id;
+      } catch(e){ console.error('insert product catch:',e); toast('✗ Error al guardar'); return; }
+    }
+    products.unshift({id:newId, name, price});
+    toast('✓ Producto agregado');
   }
-  saveProducts(); cancelPanelForm('inv'); renderInvPanel(); renderCatalog();
+  try{ saveProducts(); } catch(e){}
+  cancelPanelForm('inv');
+  renderInvPanel();
+  try{ renderCatalog(); renderProductChips(); } catch(e){}
 }
 
 function togglePersonCard(type, id) {
