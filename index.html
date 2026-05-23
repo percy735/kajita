@@ -1639,7 +1639,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v7.5-BANCAMOV3CARDS</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v7.6-RENDFIX3CARDS</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -4317,6 +4317,7 @@ function renderPendingBar(){
 
 function renderEntries(){
   const list=document.getElementById('entList');
+  console.log('renderEntries - activeDay:', activeDay, 'total entries:', entries.length, 'sample dates:', entries.slice(0,3).map(e=>e.date));
   let day=entries.filter(e=>e.date===activeDay);
   if(cFilter==='income')   day=day.filter(e=>e.type==='income'&&!e.credit);
   else if(cFilter==='expense')  day=day.filter(e=>e.type==='expense');
@@ -4429,7 +4430,8 @@ async function loadDB(){
     if(eRes.data) entries = eRes.data.map(x=>({
       id: x.id, type: x.type, desc: x.description,
       amount: parseFloat(x.amount), pay: x.payment_type,
-      date: x.date, time: x.time,
+      date: x.date ? String(x.date).substring(0,10) : null,
+      time: x.time ? String(x.time).substring(0,8) : '',
       credit: x.is_credit, client: x.client_name||'', paid: x.is_paid
     }));
 
