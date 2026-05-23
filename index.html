@@ -1639,7 +1639,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v7.6-RENDFIX3CARDS</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v7.7-FINAL3CARDS</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -4397,63 +4397,48 @@ var sb = window.supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkanFhd2Zpa2RseHhlbGFiZXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDYwMTAsImV4cCI6MjA5NDUyMjAxMH0.h_-97MAKlbrCaFJQbLzQgRa9X33GgbpxuXEuqHhOGOo'
 );
 var currentUser = null;
-var appStarted = false;
 
-// ── HELPERS ──
 function getToday(){
-  const d = new Date();
+  const d=new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-function showApp(){
-  document.getElementById('authScreen').style.display='none';
-  document.getElementById('app').style.display='block';
-}
-
-function showAuth(){
-  document.getElementById('authScreen').style.display='flex';
-  document.getElementById('app').style.display='none';
-}
-
-// ── CARGAR DATOS DESDE SUPABASE ──
+// ── CARGAR DATOS ──
 async function loadDB(){
   if(!currentUser) return;
-  const uid = currentUser.id;
-  try {
-    const [eRes, pRes, cRes, prRes] = await Promise.all([
-      sb.from('entries').select('*').eq('user_id', uid).order('date', {ascending:false}).order('time', {ascending:false}),
-      sb.from('products').select('*').eq('user_id', uid).order('name'),
-      sb.from('clients').select('*').eq('user_id', uid).order('name'),
-      sb.from('profiles').select('business_name,business_rubro').eq('id', uid).single()
+  const uid=currentUser.id;
+  try{
+    const [eRes,pRes,cRes,prRes]=await Promise.all([
+      sb.from('entries').select('*').eq('user_id',uid),
+      sb.from('products').select('*').eq('user_id',uid),
+      sb.from('clients').select('*').eq('user_id',uid),
+      sb.from('profiles').select('business_name,business_rubro').eq('id',uid).maybeSingle()
     ]);
-
-    if(eRes.data) entries = eRes.data.map(x=>({
-      id: x.id, type: x.type, desc: x.description,
-      amount: parseFloat(x.amount), pay: x.payment_type,
-      date: x.date ? String(x.date).substring(0,10) : null,
-      time: x.time ? String(x.time).substring(0,8) : '',
-      credit: x.is_credit, client: x.client_name||'', paid: x.is_paid
-    }));
-
-    if(pRes.data) products = pRes.data.map(x=>({id:x.id, name:x.name, price:parseFloat(x.price)}));
-    if(cRes.data) clients  = cRes.data.map(x=>({id:x.id, name:x.name, phone:x.phone||''}));
-
-    if(prRes.data && prRes.data.business_name){
-      bizProfile = {name: prRes.data.business_name, rubro: prRes.data.business_rubro||''};
-      localStorage.setItem('kajita_biz', JSON.stringify(bizProfile));
+    if(eRes.data){
+      entries=eRes.data.map(x=>({
+        id:x.id, type:x.type, desc:x.description,
+        amount:parseFloat(x.amount), pay:x.payment_type,
+        date: String(x.date||'').substring(0,10),
+        time: String(x.time||'').substring(0,8),
+        credit:x.is_credit, client:x.client_name||'', paid:x.is_paid
+      }));
     }
-    console.log('✓ loadDB:', entries.length, 'entries,', clients.length, 'clients,', products.length, 'products');
-  } catch(err){
-    console.error('loadDB error:', err);
-  }
+    if(pRes.data) products=pRes.data.map(x=>({id:x.id,name:x.name,price:parseFloat(x.price)}));
+    if(cRes.data) clients=cRes.data.map(x=>({id:x.id,name:x.name,phone:x.phone||''}));
+    if(prRes.data && prRes.data.business_name){
+      bizProfile={name:prRes.data.business_name, rubro:prRes.data.business_rubro||''};
+      try{localStorage.setItem('kajita_biz',JSON.stringify(bizProfile));}catch(e){}
+    }
+    console.log('loadDB done:', entries.length,'entries, activeDay:',activeDay,'dates:',entries.slice(0,3).map(e=>e.date));
+  }catch(err){console.error('loadDB:',err);}
 }
 
 // ── INICIAR APP ──
 async function startApp(){
-  if(appStarted){ render(); return; }
-  appStarted = true;
-  showApp();
-  activeDay = getToday();
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  activeDay=getToday();
+  console.log('startApp, activeDay=',activeDay);
   await loadDB();
   buildDayBar();
   render();
@@ -4461,132 +4446,124 @@ async function startApp(){
   checkOnboarding();
 }
 
+// ── AUTH ERROR ──
+function showAuthError(msg,type){
+  const el=document.getElementById('authError');
+  if(!el)return;
+  el.textContent=msg;
+  el.style.display='block';
+  el.style.color=type==='success'?'var(--k-accent)':'var(--k-expense)';
+}
+
 // ── DEMO ──
 async function handleDemoLogin(){
-  currentUser = {
-    id: 'demo-user-00000000-0000-0000-0000-000000000000',
-    email: 'demo@kajita.app',
-    user_metadata: {business_name:'Demo - Prueba Kajita'}
-  };
-  bizProfile = {name:'Demo - Prueba Kajita', rubro:'Servicios'};
-  showApp();
-  activeDay = getToday();
-  entries=[]; products=[]; clients=[];
-  buildDayBar(); render(); applyBizProfile();
+  currentUser={id:'demo-user-0000',email:'demo@kajita.app',user_metadata:{business_name:'Demo'}};
+  bizProfile={name:'Demo - Prueba Kajita',rubro:'Servicios'};
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  activeDay=getToday();
+  entries=[];products=[];clients=[];
+  buildDayBar();render();applyBizProfile();
   toast('🚀 Modo Demo activo');
 }
 
 // ── LOGIN ──
-function showAuthError(msg, type='error'){
-  const el = document.getElementById('authError');
-  if(!el) return;
-  el.textContent = msg;
-  el.style.display = 'block';
-  el.style.color = type==='success' ? 'var(--k-accent)' : 'var(--k-expense)';
-}
-
 async function handleLogin(e){
   e.preventDefault();
-  const email    = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const btn      = document.getElementById('loginBtn');
+  const email=document.getElementById('loginEmail').value.trim();
+  const pw=document.getElementById('loginPassword').value;
+  if(!email||!pw){showAuthError('Completa todos los campos');return;}
   
-  if(!email||!password){ showAuthError('Completa todos los campos'); return; }
-  btn.disabled = true;
-  document.getElementById('loginText').style.display  = 'none';
-  document.getElementById('loginLoader').style.display = 'inline';
-  document.getElementById('authError').style.display  = 'none';
-
-  try {
-    const {data, error} = await sb.auth.signInWithPassword({email, password});
-    if(error) throw error;
-    // onAuthStateChange lo maneja
-  } catch(err){
-    showAuthError(err.message.includes('Invalid')||err.message.includes('credentials') ? 'Email o contraseña incorrectos' : 'Error: '+err.message);
-    btn.disabled = false;
-    document.getElementById('loginText').style.display  = 'inline';
-    document.getElementById('loginLoader').style.display = 'none';
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;
+  document.getElementById('loginText').style.display='none';
+  document.getElementById('loginLoader').style.display='inline';
+  document.getElementById('authError').style.display='none';
+  
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
+    if(error)throw error;
+    currentUser=data.user;
+    await startApp();
+  }catch(err){
+    showAuthError(err.message.includes('Invalid')||err.message.includes('credentials')?'Email o contraseña incorrectos':'Error: '+err.message);
+    btn.disabled=false;
+    document.getElementById('loginText').style.display='inline';
+    document.getElementById('loginLoader').style.display='none';
   }
 }
 
 // ── REGISTRO ──
 async function handleRegister(e){
   e.preventDefault();
-  const business = document.getElementById('registerBusiness').value.trim();
-  const email    = document.getElementById('registerEmail').value.trim();
-  const password = document.getElementById('registerPassword').value;
-  const btn      = document.getElementById('registerBtn');
-
-  if(!business){ showAuthError('Ingresa el nombre de tu negocio'); return; }
-  if(!email)   { showAuthError('Ingresa tu email'); return; }
-  if(password.length<6){ showAuthError('Contraseña mínimo 6 caracteres'); return; }
-
-  btn.disabled = true;
-  document.getElementById('registerText').style.display  = 'none';
-  document.getElementById('registerLoader').style.display = 'inline';
-  document.getElementById('authError').style.display     = 'none';
-
-  try {
-    const {data, error} = await sb.auth.signUp({email, password, options:{data:{business_name:business}}});
-    if(error) throw error;
+  const biz=document.getElementById('registerBusiness').value.trim();
+  const email=document.getElementById('registerEmail').value.trim();
+  const pw=document.getElementById('registerPassword').value;
+  if(!biz){showAuthError('Ingresa el nombre de tu negocio');return;}
+  if(!email){showAuthError('Ingresa tu email');return;}
+  if(pw.length<6){showAuthError('Contraseña mínimo 6 caracteres');return;}
+  
+  const btn=document.getElementById('registerBtn');
+  btn.disabled=true;
+  document.getElementById('registerText').style.display='none';
+  document.getElementById('registerLoader').style.display='inline';
+  document.getElementById('authError').style.display='none';
+  
+  try{
+    const{data,error}=await sb.auth.signUp({email,password:pw,options:{data:{business_name:biz}}});
+    if(error)throw error;
     if(data.user){
-      await sb.from('profiles').upsert([{id:data.user.id, business_name:business}]);
-      showAuthError('¡Cuenta creada! Iniciando...','success');
+      try{await sb.from('profiles').upsert([{id:data.user.id,business_name:biz}]);}catch(e){}
+      currentUser=data.user;
+      bizProfile={name:biz,rubro:''};
+      await startApp();
+      toast('¡Cuenta creada! Bienvenido a Kajita 🎉');
     }
-  } catch(err){
+  }catch(err){
     showAuthError('Error: '+err.message);
-    btn.disabled = false;
-    document.getElementById('registerText').style.display  = 'inline';
-    document.getElementById('registerLoader').style.display = 'none';
+    btn.disabled=false;
+    document.getElementById('registerText').style.display='inline';
+    document.getElementById('registerLoader').style.display='none';
   }
 }
 
 // ── LOGOUT ──
 async function handleLogout(){
-  if(!confirm('¿Cerrar sesión?')) return;
-  const wasDemo = currentUser?.id?.includes('demo-user');
-  try { localStorage.clear(); } catch(e){}
-  currentUser = null; appStarted = false;
-  entries=[]; products=[]; clients=[]; bizProfile=null;
-  if(!wasDemo){ try{ await sb.auth.signOut(); }catch(e){} }
-  window.location.href = window.location.pathname+'?t='+Date.now();
+  if(!confirm('¿Cerrar sesión?'))return;
+  try{localStorage.clear();}catch(e){}
+  currentUser=null;
+  entries=[];products=[];clients=[];bizProfile=null;
+  try{await sb.auth.signOut();}catch(e){}
+  // Recargar la página
+  window.location.href=window.location.pathname;
 }
 
-// ── SINCRONIZAR (botón 🔄) ──
+// ── REFRESH ──
 async function refreshData(){
-  if(!currentUser||currentUser.id?.includes('demo-user')){ toast('Inicia sesión primero'); return; }
-  toast('🔄 Sincronizando...');
+  if(!currentUser)return;
   await loadDB();
   render();
-  toast('✓ Datos actualizados');
 }
 
-// ── AUTH STATE ──
-sb.auth.onAuthStateChange(async(event, session)=>{
-  console.log('auth event:', event);
-  if(event==='SIGNED_IN' && session){
-    currentUser = session.user;
-    appStarted = false;
-    await startApp();
-  } else if(event==='SIGNED_OUT'){
-    currentUser = null; appStarted = false;
-    entries=[]; products=[]; clients=[];
-    showAuth();
+// ── VERIFICAR SESIÓN AL CARGAR ──
+window.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(session){
+      currentUser=session.user;
+      await startApp();
+    }else{
+      document.getElementById('authScreen').style.display='flex';
+      document.getElementById('app').style.display='none';
+    }
+  }catch(e){
+    console.error('checkAuth error:',e);
+    document.getElementById('authScreen').style.display='flex';
+    document.getElementById('app').style.display='none';
   }
 });
 
-// ── INIT ──
-window.addEventListener('DOMContentLoaded', async ()=>{
-  const {data:{session}} = await sb.auth.getSession();
-  if(session){
-    currentUser = session.user;
-    await startApp();
-  } else {
-    showAuth();
-  }
-});
-
-console.log('✓ Kajita v6.9');
+console.log('✓ Kajita v7.7');
 </script>
 </body>
 </html>
