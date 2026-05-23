@@ -66,7 +66,7 @@ body::before {
 /* ── TOP NAV ── */
 .topnav {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 22px 0 0; gap: 12px;
+  padding: 42px 0 30px; gap: 20px;
 }
 .brand { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
 
@@ -113,11 +113,11 @@ body::before {
   text-transform: uppercase; color: var(--k-text-3); margin-top: 4px;
 }
 
-.nav-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.nav-actions { display: flex; gap: 20px; align-items: center; flex-shrink: 0; }
 
 /* Botón lupa */
 .btn-search {
-  width: 38px; height: 38px; border-radius: 50%;
+  width: 42px; height: 42px; border-radius: 50%;
   border: 1px solid var(--k-line); background: var(--k-panel);
   color: var(--k-text-3); cursor: pointer; transition: all 0.2s;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -130,7 +130,7 @@ body::before {
 
 /* Botón tuerca */
 .btn-gear {
-  width: 38px; height: 38px; border-radius: 50%;
+  width: 42px; height: 42px; border-radius: 50%;
   border: 1px solid var(--k-line); background: var(--k-panel);
   color: var(--k-text-3); cursor: pointer; transition: all 0.2s;
   display: flex; align-items: center; justify-content: center;
@@ -247,41 +247,6 @@ body::before {
 .btn-export:hover { background: #d0ff4d; border-color: #d0ff4d; color: var(--k-bg); transform: translateY(-1px); }
 
 /* ── PENDING ALERT & EXPANDED ── */
-.pending-bar {
-  display: none; margin: 0;
-  background: var(--k-credit-l); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 16px;
-  padding: 12px 16px; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-  cursor: pointer; transition: background 0.2s, border-color 0.2s, border-radius 0.2s;
-  backdrop-filter: blur(10px);
-}
-.pending-bar:hover { background: rgba(251, 191, 36, 0.18); border-color: rgba(251, 191, 36, 0.4); }
-.pending-bar.visible { display: flex; margin-bottom: 24px; }
-.pending-bar.expanded { border-radius: 16px 16px 0 0; border-bottom-color: transparent; margin-bottom: 0; }
-.pb-left { display: flex; align-items: center; gap: 10px; }
-.pb-icon { font-size: 18px; }
-.pb-text { font-size: 13px; font-weight: 600; color: var(--k-credit); }
-.pb-sub  { font-size: 11px; color: var(--k-credit); opacity: 0.8; margin-top: 1px; font-family: var(--mono); }
-.pb-link { font-family: var(--sans); font-weight: 600; font-size: 12px; color: var(--k-credit); display: flex; align-items: center; gap: 4px; transition: opacity 0.2s; }
-.pb-link:hover { opacity: 0.8; }
-
-.pending-expanded-wrap {
-  display: none; background: rgba(0,0,0,0.4); border: 1px solid rgba(251, 191, 36, 0.2); border-top: none;
-  border-radius: 0 0 16px 16px; padding: 4px 12px 12px; margin-bottom: 24px;
-}
-.pending-expanded-wrap.open { display: block; animation: slideDownPe 0.25s ease-out forwards; transform-origin: top; }
-@keyframes slideDownPe { from { opacity: 0; transform: scaleY(0.95); } to { opacity: 1; transform: scaleY(1); } }
-
-.pe-item {
-  display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
-  padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.pe-item:last-child { border-bottom: none; }
-.pe-info { min-width: 0; }
-.pe-client { font-size: 13px; font-weight: 600; color: var(--k-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pe-desc { font-size: 11px; color: var(--k-text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pe-date { font-family: var(--mono); font-size: 9px; color: var(--k-credit); opacity: 0.8; margin-left: 4px; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 6px; }
-.pe-amt { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--k-credit); text-align: right; }
-
 /* ── HEADER ROW ── */
 header {
   padding: 24px 0; border-bottom: 1px solid var(--k-line); margin-bottom: 24px;
@@ -381,6 +346,12 @@ header {
 .stat-card.s-inc::before   { background: var(--k-accent); box-shadow: 0 2px 10px var(--k-accent-l); }
 .stat-card.s-exp::before   { background: var(--k-expense); box-shadow: 0 2px 10px var(--k-expense-l); }
 .stat-card.s-cred::before  { background: var(--k-credit); box-shadow: 0 2px 10px var(--k-credit-l); }
+.stat-card.s-bal::before   { background: #60A5FA; box-shadow: 0 2px 10px rgba(96,165,250,0.2); }
+.stat-card.s-bal  .stat-value { color: #60A5FA; }
+.stat-card.s-bal.positive .stat-value { color: var(--k-accent); }
+.stat-card.s-bal.positive::before { background: var(--k-accent); }
+.stat-card.s-bal.negative .stat-value { color: var(--k-expense); }
+.stat-card.s-bal.negative::before { background: var(--k-expense); }
 
 .stat-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--k-text-3); margin-bottom: 6px; }
 .stat-value { font-family: var(--mono); font-size: 17px; font-weight: 500; }
@@ -412,7 +383,7 @@ header {
   background: var(--k-panel); 
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--k-line); border-radius: 28px; 
-  padding: 26px 30px; margin-bottom: 30px; box-shadow: var(--shadow); 
+  padding: 28px 30px 30px; margin-bottom: 32px; box-shadow: var(--shadow); 
   position: relative; z-index: 10;
   /* SIN isolation:isolate ni transform — crean stacking context que atrapa los pickers */
 }
@@ -773,6 +744,8 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
 .qbtn.qcli:hover  { color: var(--k-blue);    border-color: var(--k-blue);    background: var(--k-blue-l); }
 .qbtn.qprov:hover { color: var(--k-expense); border-color: var(--k-expense); background: var(--k-expense-l); }
 .qbtn.qinv:hover  { color: var(--k-accent);  border-color: var(--k-accent);  background: var(--k-accent-l); }
+.qbtn.qcred { color: var(--k-credit); border-color: rgba(251,191,36,0.25); background: rgba(251,191,36,0.06); }
+.qbtn.qcred:hover { color: var(--k-credit); border-color: var(--k-credit); background: var(--k-credit-l); }
 
 /* ══════════════════════════════════════════
    PANEL LATERAL
@@ -954,6 +927,25 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
 .inv-price { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--k-accent); }
 .inv-sold  { font-family: var(--mono); font-size: 9.5px; color: var(--k-text-3); margin-top: 2px; }
 .inv-card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* ══ CRÉDITOS PANEL ══ */
+.cred-card {
+  border-radius: 13px; border: 1px solid rgba(251,191,36,0.2);
+  background: rgba(251,191,36,0.05); padding: 13px 14px;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+}
+.cred-card-left { flex: 1; min-width: 0; }
+.cred-card-client { font-size: 13px; font-weight: 600; color: var(--k-text); margin-bottom: 3px; }
+.cred-card-meta { font-family: var(--mono); font-size: 9.5px; color: var(--k-text-3); }
+.cred-card-right { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.cred-card-amt { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--k-credit); }
+.cred-cobrar-btn {
+  font-size: 10px; font-family: var(--mono); font-weight: 600;
+  padding: 4px 10px; border-radius: 99px; border: 1px solid var(--k-accent);
+  background: rgba(196,240,66,0.08); color: var(--k-accent); cursor: pointer;
+  transition: all 0.15s;
+}
+.cred-cobrar-btn:hover { background: var(--k-accent); color: #0A0B0E; }
 
 @media (max-width: 600px) {
   .panel-sheet { width: 100%; border-left: none; top: auto; height: 92vh; border-radius: 20px 20px 0 0; }
@@ -1201,6 +1193,78 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   .onb-wordmark .wm-ita { font-size: 32px; }
 }
 
+/* ══ DATE CHIP - botón de fecha compacto dentro del form ══ */
+/* ══ FILA TÍTULO + CHIP FECHA ══ */
+.form-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.form-title-row .form-ttl { margin-bottom: 0; }
+
+.date-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px 6px 9px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 99px;
+  color: var(--k-text-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.date-chip:hover {
+  background: rgba(196,240,66,0.08);
+  border-color: rgba(196,240,66,0.3);
+  color: var(--k-accent);
+}
+.date-chip:hover svg { stroke: var(--k-accent); }
+.date-chip.is-past {
+  color: var(--k-credit);
+  border-color: rgba(251,191,36,0.25);
+  background: rgba(251,191,36,0.06);
+}
+@media print { .date-chip { display: none !important; } }
+
+/* ══ BOTÓN FLOTANTE (FAB) - AÑADIR ══ */
+.fab-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--k-accent);
+  color: #0A0B0E;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 24px rgba(196,240,66,0.5), 0 2px 8px rgba(0,0,0,0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 900;
+  padding: 0;
+  line-height: 1;
+}
+.fab-btn svg {
+  display: block;
+  flex-shrink: 0;
+  /* Centrado óptico perfecto */
+  margin: 0;
+}
+.fab-btn:hover { transform: scale(1.09); box-shadow: 0 6px 30px rgba(196,240,66,0.65), 0 2px 8px rgba(0,0,0,0.3); }
+.fab-btn:active { transform: scale(0.93); }
+@media print { .fab-btn { display: none !important; } }
+
 @media print { .onb-overlay { display: none !important; } }
 
 
@@ -1329,7 +1393,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   .app { padding: 0 14px 80px; }
 
   /* ── TOPNAV ── */
-  .topnav { padding: 14px 0 10px; gap: 8px; flex-wrap: nowrap; align-items: center; }
+  .topnav { padding: 20px 0 14px; gap: 8px; flex-wrap: nowrap; align-items: center; }
   .brand  { gap: 10px; flex-shrink: 0; min-width: 0; flex: 1; }
   .brand-mark { width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; }
   .brand-mark svg { width: 24px; height: 24px; }
@@ -1338,12 +1402,12 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   .wm-ita { font-size: 20px; }
   .brand-tagline { font-size: 7.5px; }
   .biz-identity-name { font-size: 8.5px; max-width: 130px; }
-  .nav-actions { gap: 4px; flex-shrink: 0; }
-  .btn-gear   { width: 34px; height: 34px; }
-  .btn-search { width: 34px; height: 34px; }
-  .btn-nav    { padding: 7px 9px; font-size: 12px; gap: 3px; }
+  .nav-actions { gap: 12px; flex-shrink: 0; }
+  .btn-gear   { width: 38px; height: 38px; }
+  .btn-search { width: 38px; height: 38px; }
+  .btn-nav    { padding: 8px 11px; font-size: 12px; gap: 3px; }
   .btn-txt    { display: none; }
-  .btn-export { padding: 7px 9px; }
+  .btn-export { padding: 8px 11px; }
 
   /* Ocultar texto en botones de nav en móvil */
   .btn-txt  { display: none; }
@@ -1356,7 +1420,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   .date-strip-wrap { max-width: 100%; width: 100%; }
 
   /* ── STATS ── */
-  .stats-grid { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .stats-grid { grid-template-columns: repeat(2,1fr); gap: 8px; }
   .stat-card  { padding: 12px 10px; border-radius: 16px; }
   .stat-label { font-size: 9px; line-height: 1.3; }
   .stat-value { font-size: 15px; margin-top: 5px; }
@@ -1575,7 +1639,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v5.6-DATEFIX</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v6.8-SUBMIT</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -1594,10 +1658,6 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
           <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
         </svg>
       </button>
-      <button class="btn-nav" onclick="openCatalog()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        <span class="btn-txt">Añadir</span>
-      </button>
       <button class="btn-nav btn-export" onclick="showPDFPreview()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         <span class="btn-txt">Imprimir</span>
@@ -1613,48 +1673,20 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   <div id="bizBar" style="display:none;"><span id="_bizBarName"></span></div>
 
   <div class="day-bar" id="dayBar" style="display:none;"></div>
-
-  <header>
-    <div class="header-left">
-      <div class="day-label" id="dayLabel">Hoy</div>
-      <div class="day-title"  id="dayTitle">—</div>
-      <div style="margin-top:12px;">
-        <div class="balance-label">Balance del día</div>
-        <div class="balance-amount" id="totalBalance">S/ 0.00</div>
-        <div class="balance-pending" id="balancePending" style="display:none;"></div>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:1;min-width:0;">
-      <button class="cal-trigger-btn" onclick="openCalendar()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        Ver mes
-      </button>
-      <div class="date-strip-wrap" style="max-width:100%;width:100%;">
-        <div class="date-strip" id="dateStrip"></div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Stats -->
-  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
-    <div class="stat-card s-inc"><div class="stat-label">Ingresos cobrados</div><div class="stat-value" id="statInc">S/ 0.00</div></div>
-    <div class="stat-card s-exp"><div class="stat-label">Egresos</div><div class="stat-value" id="statExp">S/ 0.00</div></div>
-    <div class="stat-card s-cred"><div class="stat-label">Por cobrar (créditos)</div><div class="stat-value" id="statCred">S/ 0.00</div></div>
-  </div>
-  <div class="sub-row">
-    <div class="sub-card s-cash">
-      <div><div class="sub-lbl">Caja física</div><div class="sub-title">Efectivo en mano</div></div>
-      <div style="display:flex;align-items:center;gap:10px;"><div class="sub-amount" id="cashNet">S/ 0.00</div><div class="sub-icon">💵</div></div>
-    </div>
-    <div class="sub-card s-dig">
-      <div><div class="sub-lbl">Banca móvil</div><div class="sub-title">Yape + Transferencias</div></div>
-      <div style="display:flex;align-items:center;gap:10px;"><div class="sub-amount" id="digNet">S/ 0.00</div><div class="sub-icon">📱</div></div>
-    </div>
-  </div>
-
   <!-- Form -->
   <div class="form-wrap">
-    <div class="form-ttl" id="formTtl">Registrar movimiento</div>
+    <div class="form-title-row">
+      <div class="form-ttl" id="formTtl">Registrar movimiento</div>
+      <button class="date-chip" id="dateChip" onclick="openCalendar()" title="Cambiar fecha">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span id="dateChipLabel">HOY</span>
+      </button>
+    </div>
     <div class="form-row s1">
       <div class="fld">
         <label>Tipo de movimiento</label>
@@ -1733,23 +1765,36 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <button class="btn-cancel" id="btnCan" style="display:none;" onclick="cancelEdit()">Cancelar edición</button>
   </div>
 
-  <div class="pending-bar" id="pendingBar" onclick="togglePendingExpanded()">
-    <div class="pb-left">
-      <span class="pb-icon">⏳</span>
-      <div>
-        <div class="pb-text" id="pendingBarText">2 ventas a crédito pendientes</div>
-        <div class="pb-sub" id="pendingBarAmt">S/ 0.00 por cobrar en total</div>
-      </div>
+
+
+  <div class="stats-grid">
+    <div class="stat-card s-bal">
+      <div class="stat-label">Balance del día</div>
+      <div class="stat-value" id="totalBalance">S/ 0.00</div>
+      <div class="balance-pending" id="balancePending" style="display:none;font-size:10px;margin-top:2px;"></div>
     </div>
-    <span class="pb-link" id="pbLinkText">Ver pendientes ▼</span>
+    <div class="stat-card s-inc"><div class="stat-label">Ingresos cobrados</div><div class="stat-value" id="statInc">S/ 0.00</div></div>
+    <div class="stat-card s-exp"><div class="stat-label">Egresos</div><div class="stat-value" id="statExp">S/ 0.00</div></div>
+    <div class="stat-card s-cred"><div class="stat-label">Por cobrar</div><div class="stat-value" id="statCred">S/ 0.00</div></div>
   </div>
-  <div class="pending-expanded-wrap" id="pendingExpandedWrap"></div>
+  <div class="sub-row">
+    <div class="sub-card s-cash">
+      <div><div class="sub-lbl">Caja física</div><div class="sub-title">Efectivo en mano</div></div>
+      <div style="display:flex;align-items:center;gap:10px;"><div class="sub-amount" id="cashNet">S/ 0.00</div><div class="sub-icon">💵</div></div>
+    </div>
+    <div class="sub-card s-dig">
+      <div><div class="sub-lbl">Banca móvil</div><div class="sub-title">Yape + Transferencias</div></div>
+      <div style="display:flex;align-items:center;gap:10px;"><div class="sub-amount" id="digNet">S/ 0.00</div><div class="sub-icon">📱</div></div>
+    </div>
+  </div>
+
 
   <!-- ACCESOS DIRECTOS -->
   <div class="quick-bar">
-    <button class="qbtn qcli"  onclick="openPanel('cli')">Clientes</button>
-    <button class="qbtn qprov" onclick="openPanel('prov')">Proveedores</button>
-    <button class="qbtn qinv"  onclick="openPanel('inv')">Inventario</button>
+    <button class="qbtn qcli"  onclick="openPanel('cli')">👤 Clientes</button>
+    <button class="qbtn qprov" onclick="openPanel('prov')">🏭 Proveedores</button>
+    <button class="qbtn qinv"  onclick="openPanel('inv')">📦 Inventario</button>
+    <button class="qbtn qcred" onclick="openPanel('cred')">⏳ Créditos</button>
   </div>
 
   <div class="entries-hdr">
@@ -1998,6 +2043,32 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   </div>
 </div>
 
+<!-- ══ PANEL: CRÉDITOS ══ -->
+<div class="panel-overlay" id="panelCredOverlay" onclick="if(event.target===this)closePanel('cred')">
+  <div class="panel-sheet" id="panelCredSheet">
+    <div class="panel-head">
+      <div>
+        <div class="panel-ttl">⏳ Créditos por cobrar</div>
+        <div class="panel-sub" id="panelCredSub">—</div>
+      </div>
+      <div class="panel-head-right">
+        <button class="panel-close" onclick="closePanel('cred')">×</button>
+      </div>
+    </div>
+    <div class="panel-list" id="panelCredList"></div>
+    <div class="panel-totals">
+      <div class="panel-total-box">
+        <div class="panel-total-lbl">Total pendiente</div>
+        <div class="panel-total-val" id="panelCredTotal" style="color:var(--k-credit);">S/ 0.00</div>
+      </div>
+      <div class="panel-total-box">
+        <div class="panel-total-lbl">Ventas a crédito</div>
+        <div class="panel-total-val" id="panelCredCount" style="color:var(--k-text-2);">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ SETTINGS MODAL ══ -->
 <div class="cfg-overlay" id="cfgOverlay" onclick="if(event.target===this)closeSettings()">
   <div class="cfg-sheet">
@@ -2122,6 +2193,14 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   </div>
 </div>
 
+<!-- BOTÓN FLOTANTE AÑADIR -->
+<button class="fab-btn" onclick="openCatalog()" title="Añadir cliente, producto o proveedor">
+  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#0A0B0E" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="11" y1="2" x2="11" y2="20"/>
+    <line x1="2" y1="11" x2="20" y2="11"/>
+  </svg>
+</button>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2164,11 +2243,11 @@ async function addProduct() {
   if(!name)           { toast('Escribe el nombre del producto'); return; }
   if(!price||price<=0){ toast('Ingresa un precio válido'); return; }
   if(editingProductId !== null) {
-    const p = products.find(x=>x.id===editingProductId);
+    const p = products.find(x=>String(x.id)===String(editingProductId));
     if(p){ 
       p.name=name; p.price=price; 
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof editingProductId === 'string' && editingProductId.length === 36) {
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && editingProductId !== null && editingProductId !== undefined) {
         try {
           await sb.from('products').update({name, price}).eq('id', editingProductId).eq('user_id', currentUser.id);
         } catch(e) { console.error('Error updating product:', e); }
@@ -2207,7 +2286,7 @@ async function addProduct() {
 }
 
 function editProduct(id) {
-  const p = products.find(x=>x.id===id); if(!p) return;
+  const p = products.find(x=>String(x.id)===String(id)); if(!p) return;
   editingProductId = id;
   document.getElementById('cpName').value  = p.name;
   document.getElementById('cpPrice').value = p.price;
@@ -2224,7 +2303,7 @@ function cancelEditProduct() {
 }
 
 function delProduct(id) {
-  const p = products.find(x=>x.id===id); if(!p) return;
+  const p = products.find(x=>String(x.id)===String(id)); if(!p) return;
   showConfirm({
     icon: '📦', title: '¿Eliminar producto?',
     desc: `<strong>${p.name}</strong> — S/${p.price.toFixed(2)}<br>Esta acción no se puede deshacer.`,
@@ -2232,13 +2311,13 @@ function delProduct(id) {
       if(editingProductId===id) cancelEditProduct();
       
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof id === 'string' && id.length === 36) {
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
         try {
           await sb.from('products').delete().eq('id', id).eq('user_id', currentUser.id);
         } catch(e) { console.error('Error deleting product:', e); }
       }
       
-      products = products.filter(x=>x.id!==id);
+      products = products.filter(x=>String(x.id)!==String(id));
       saveProducts(); renderCatalog(); renderProductChips(); toast('Producto eliminado');
     }
   });
@@ -2249,12 +2328,12 @@ async function addClient() {
   const phone = document.getElementById('ccPhone').value.trim();
   if(!name){ toast('Escribe el nombre del cliente'); return; }
   if(editingClientId !== null) {
-    const c = clients.find(x=>x.id===editingClientId);
+    const c = clients.find(x=>String(x.id)===String(editingClientId));
     if(c){ 
       c.name=name; 
       c.phone=phone; 
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof editingClientId === 'string' && editingClientId.length === 36) {
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && editingClientId !== null && editingClientId !== undefined) {
         try {
           await sb.from('clients').update({name, phone: phone || null}).eq('id', editingClientId).eq('user_id', currentUser.id);
         } catch(e) { console.error('Error updating client:', e); }
@@ -2297,7 +2376,7 @@ async function addClient() {
 }
 
 function editClient(id) {
-  const c = clients.find(x=>x.id===id); if(!c) return;
+  const c = clients.find(x=>String(x.id)===String(id)); if(!c) return;
   editingClientId = id;
   document.getElementById('ccName').value  = c.name;
   document.getElementById('ccPhone').value = c.phone||'';
@@ -2314,7 +2393,7 @@ function cancelEditClient() {
 }
 
 function delClient(id) {
-  const c = clients.find(x=>x.id===id); if(!c) return;
+  const c = clients.find(x=>String(x.id)===String(id)); if(!c) return;
   showConfirm({
     icon: '👤', title: '¿Eliminar cliente?',
     desc: `<strong>${c.name}</strong><br>Se perderá su historial en el panel. Esta acción no se puede deshacer.`,
@@ -2322,13 +2401,13 @@ function delClient(id) {
       if(editingClientId===id) cancelEditClient();
       
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof id === 'string' && id.length === 36) {
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
         try {
           await sb.from('clients').delete().eq('id', id).eq('user_id', currentUser.id);
         } catch(e) { console.error('Error deleting client:', e); }
       }
       
-      clients = clients.filter(x=>x.id!==id);
+      clients = clients.filter(x=>String(x.id)!==String(id));
       saveClients(); renderCatalog(); renderClientDropdown(); toast('Cliente eliminado');
     }
   });
@@ -2354,7 +2433,7 @@ function addSupplier() {
 }
 
 function editSupplier(id) {
-  const s = suppliers.find(x=>x.id===id); if(!s) return;
+  const s = suppliers.find(x=>String(x.id)===String(id)); if(!s) return;
   editingSuppliedId = id;
   document.getElementById('cvName').value  = s.name; document.getElementById('cvPhone').value = s.phone||'';
   document.getElementById('cat-add-btn-prov').textContent = '✓ Guardar';
@@ -2370,13 +2449,13 @@ function cancelEditSupplier() {
 }
 
 function delSupplier(id) {
-  const s = suppliers.find(x=>x.id===id); if(!s) return;
+  const s = suppliers.find(x=>String(x.id)===String(id)); if(!s) return;
   showConfirm({
     icon: '🏭', title: '¿Eliminar proveedor?',
     desc: `<strong>${s.name}</strong><br>Esta acción no se puede deshacer.`,
     onConfirm: () => {
       if(editingSuppliedId===id) cancelEditSupplier();
-      suppliers = suppliers.filter(x=>x.id!==id);
+      suppliers = suppliers.filter(x=>String(x.id)!==String(id));
       saveSuppliers(); renderCatalog(); renderSupplierDropdown(); toast('Proveedor eliminado');
     }
   });
@@ -2394,8 +2473,8 @@ function renderCatalog() {
             <div class="cat-item-sub">S/ ${p.price.toFixed(2)}</div>
           </div>
           <div class="cat-item-actions">
-            <button class="cat-item-edit" onclick="editProduct(${p.id})" title="Editar">✎</button>
-            <button class="cat-item-del"  onclick="delProduct(${p.id})"  title="Eliminar">×</button>
+            <button class="cat-item-edit" onclick="editProduct(\'${p.id}\')" title="Editar">✎</button>
+            <button class="cat-item-del"  onclick="delProduct(\'${p.id}\')"  title="Eliminar">×</button>
           </div>
         </div>`).join('');
 
@@ -2410,8 +2489,8 @@ function renderCatalog() {
             <div class="cat-item-sub">${c.phone||'Sin teléfono'}</div>
           </div>
           <div class="cat-item-actions">
-            <button class="cat-item-edit" onclick="editClient(${c.id})" title="Editar">✎</button>
-            <button class="cat-item-del"  onclick="delClient(${c.id})"  title="Eliminar">×</button>
+            <button class="cat-item-edit" onclick="editClient(\'${c.id}\')" title="Editar">✎</button>
+            <button class="cat-item-del"  onclick="delClient(\'${c.id}\')"  title="Eliminar">×</button>
           </div>
         </div>`).join('');
 
@@ -2427,8 +2506,8 @@ function renderCatalog() {
               <div class="cat-item-sub">${s.phone||'Sin teléfono'}</div>
             </div>
             <div class="cat-item-actions">
-              <button class="cat-item-edit" onclick="editSupplier(${s.id})" title="Editar">✎</button>
-              <button class="cat-item-del"  onclick="delSupplier(${s.id})"  title="Eliminar">×</button>
+              <button class="cat-item-edit" onclick="editSupplier('${s.id}')" title="Editar">✎</button>
+              <button class="cat-item-del"  onclick="delSupplier('${s.id}')"  title="Eliminar">×</button>
             </div>
           </div>`).join('');
   }
@@ -2552,7 +2631,7 @@ function renderProductChips(filter='') {
     return;
   }
   wrap.innerHTML = visible.map(p=>`
-    <button class="pchip" onclick="selectProduct(${p.id})">
+    <button class="pchip" onclick="selectProduct('${p.id}')">
       <span>${p.name}</span>
       <span class="chip-price">S/${p.price.toFixed(2)}</span>
     </button>`).join('');
@@ -2579,7 +2658,7 @@ function filterProducts() {
 }
 
 function selectProduct(id) {
-  const p = products.find(x=>x.id===id); if(!p) return;
+  const p = products.find(x=>String(x.id)===String(id)); if(!p) return;
   document.getElementById('iDesc').value = p.name;
   document.getElementById('iUnitPrice').value = p.price.toFixed(2);
   productPickerOpen = false;
@@ -2627,14 +2706,14 @@ function showClientDropdown(filter) {
     return;
   }
   wrap.innerHTML = visible.map(c=>`
-    <button class="cchip" onclick="selectClientOrSupplier(${c.id})">
+    <button class="cchip" onclick="selectClientOrSupplier('${c.id}')">
       ${c.name}${c.phone?` <span style="opacity:.5;font-size:11px;">${c.phone}</span>`:''}
     </button>`).join('');
 }
 
 function selectClientOrSupplier(id) {
   const list = cType==='expense' ? suppliers : clients;
-  const c = list.find(x=>x.id===id); if(!c) return;
+  const c = list.find(x=>String(x.id)===String(id)); if(!c) return;
   document.getElementById('iClient').value = c.name;
   clientPickerOpen = false;
   document.getElementById('clientDropdown').style.display='none';
@@ -2735,6 +2814,7 @@ function openPanel(type) {
   document.getElementById('panelCliOverlay').classList.remove('open');
   document.getElementById('panelProvOverlay').classList.remove('open');
   document.getElementById('panelInvOverlay').classList.remove('open');
+  document.getElementById('panelCredOverlay').classList.remove('open');
   ['pfCli','pfProv','pfInv'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('open'); });
   document.getElementById('panelCliSearch').value  = '';
   document.getElementById('panelProvSearch').value = '';
@@ -2743,10 +2823,11 @@ function openPanel(type) {
   if(type==='cli')  { document.getElementById('panelCliOverlay').classList.add('open');  renderCliPanel(); }
   if(type==='prov') { document.getElementById('panelProvOverlay').classList.add('open'); renderProvPanel(); }
   if(type==='inv')  { document.getElementById('panelInvOverlay').classList.add('open');  renderInvPanel(); }
+  if(type==='cred') { document.getElementById('panelCredOverlay').classList.add('open'); renderCredPanel(); }
 }
 
 function closePanel(type) {
-  const map={cli:'panelCliOverlay',prov:'panelProvOverlay',inv:'panelInvOverlay'};
+  const map={cli:'panelCliOverlay',prov:'panelProvOverlay',inv:'panelInvOverlay',cred:'panelCredOverlay'};
   document.getElementById(map[type]).classList.remove('open');
 }
 
@@ -2769,7 +2850,7 @@ function cancelPanelForm(type) {
 
 function editPanelItem(type, id) {
   const maps={cli:clients,prov:suppliers,inv:products};
-  const item=maps[type].find(x=>x.id===id); if(!item) return;
+  const item=maps[type].find(x=>String(x.id)===String(id)); if(!item) return;
   _panelEditId[type]=id;
   const el=document.getElementById('pf'+type.charAt(0).toUpperCase()+type.slice(1));
   el.classList.add('open');
@@ -2780,7 +2861,7 @@ function editPanelItem(type, id) {
 
 function deletePanelItem(type, id) {
   const maps = { cli: clients, prov: suppliers, inv: products };
-  const item = maps[type]?.find(x=>x.id===id); if(!item) return;
+  const item = maps[type]?.find(x=>String(x.id)===String(id)); if(!item) return;
   const icons = { cli:'👤', prov:'🏭', inv:'📦' };
   const names = { cli:'cliente', prov:'proveedor', inv:'producto' };
   showConfirm({
@@ -2789,7 +2870,7 @@ function deletePanelItem(type, id) {
     desc: `<strong>${item.name}</strong><br>Esta acción no se puede deshacer.`,
     onConfirm: async () => {
       // Sync con Supabase
-      const isCloudId = typeof id === 'string' && id.length === 36;
+      const isCloudId = id !== null && id !== undefined;
       const isLoggedIn = typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
       
       if(type==='cli')  { 
@@ -2797,11 +2878,11 @@ function deletePanelItem(type, id) {
           try { await sb.from('clients').delete().eq('id', id).eq('user_id', currentUser.id); } 
           catch(e) { console.error('Error:', e); }
         }
-        clients=clients.filter(x=>x.id!==id);   
+        clients=clients.filter(x=>String(x.id)!==String(id));   
         saveClients();   renderCliPanel();  renderClientDropdown(); 
       }
       if(type==='prov') { 
-        suppliers=suppliers.filter(x=>x.id!==id); 
+        suppliers=suppliers.filter(x=>String(x.id)!==String(id)); 
         saveSuppliers(); renderProvPanel(); renderSupplierDropdown(); 
       }
       if(type==='inv')  { 
@@ -2809,7 +2890,7 @@ function deletePanelItem(type, id) {
           try { await sb.from('products').delete().eq('id', id).eq('user_id', currentUser.id); } 
           catch(e) { console.error('Error:', e); }
         }
-        products=products.filter(x=>x.id!==id);  
+        products=products.filter(x=>String(x.id)!==String(id));  
         saveProducts();  renderInvPanel();  renderCatalog(); 
       }
       toast('Eliminado');
@@ -2825,10 +2906,10 @@ async function savePanelClient() {
   const isLoggedIn = typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
   
   if(id!==null){ 
-    const c=clients.find(x=>x.id===id); 
+    const c=clients.find(x=>String(x.id)===String(id)); 
     if(c){
       c.name=name; c.phone=phone;
-      if(isLoggedIn && typeof id === 'string' && id.length === 36) {
+      if(isLoggedIn && id !== null && id !== undefined) {
         try { await sb.from('clients').update({name, phone: phone || null}).eq('id', id).eq('user_id', currentUser.id); }
         catch(e) { console.error('Error:', e); }
       }
@@ -2866,7 +2947,7 @@ function savePanelSupplier() {
   const phone=document.getElementById('pfProvPhone').value.trim();
   if(!name){ document.getElementById('pfProvName').focus(); return; }
   const id=_panelEditId.prov;
-  if(id!==null){ const s=suppliers.find(x=>x.id===id); if(s){s.name=name;s.phone=phone;} toast('Proveedor actualizado'); }
+  if(id!==null){ const s=suppliers.find(x=>String(x.id)===String(id)); if(s){s.name=name;s.phone=phone;} toast('Proveedor actualizado'); }
   else { suppliers.unshift({id:Date.now(),name,phone}); toast('Proveedor agregado'); }
   saveSuppliers(); cancelPanelForm('prov'); renderProvPanel(); renderSupplierDropdown();
 }
@@ -2879,10 +2960,10 @@ async function savePanelProduct() {
   const isLoggedIn = typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
   
   if(id!==null){ 
-    const p=products.find(x=>x.id===id); 
+    const p=products.find(x=>String(x.id)===String(id)); 
     if(p){
       p.name=name; p.price=price;
-      if(isLoggedIn && typeof id === 'string' && id.length === 36) {
+      if(isLoggedIn && id !== null && id !== undefined) {
         try { await sb.from('products').update({name, price}).eq('id', id).eq('user_id', currentUser.id); }
         catch(e) { console.error('Error:', e); }
       }
@@ -2963,7 +3044,7 @@ function renderCliPanel() {
       const d=new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'});
       return `<div class="person-detail-row"><div class="pdr-left"><div class="pdr-desc">${e.desc}</div><div class="pdr-date">${d}${e.time?' · '+e.time:''}</div></div><div class="pdr-right"><div class="pdr-amt" style="color:${amtClr};">${fmt(e.amount)}</div><div class="pdr-status" style="color:${amtClr};">${isPend?'Pendiente':'Cobrado'}</div></div></div>`;
     }).join(''): `<div style="padding:14px;font-family:var(--sans);font-size:12px;color:var(--k-text-3);text-align:center;">Sin movimientos registrados</div>`;
-    return `<div class="person-card${isOpen?' expanded':''}"><div class="person-card-head" onclick="togglePersonCard('cli',${c.id})"><div class="person-card-info"><div class="person-card-name">${c.name}</div><div class="person-card-meta">${c.phone||'Sin teléfono'} · ${debts.length} pendiente${debts.length!==1?'s':''}</div></div><div class="person-card-right"><span class="person-badge ${badgeCls}">${badgeTxt}</span><div class="person-card-actions" onclick="event.stopPropagation()"><button class="pca-btn" onclick="editPanelItem('cli',${c.id})" title="Editar">✎</button><button class="pca-btn del" onclick="deletePanelItem('cli',${c.id})" title="Eliminar">×</button></div><span class="person-chevron">▾</span></div></div><div class="person-detail">${debtSummary}${rows}</div></div>`;
+    return `<div class="person-card${isOpen?' expanded':''}"><div class="person-card-head" onclick="togglePersonCard('cli',${c.id})"><div class="person-card-info"><div class="person-card-name">${c.name}</div><div class="person-card-meta">${c.phone||'Sin teléfono'} · ${debts.length} pendiente${debts.length!==1?'s':''}</div></div><div class="person-card-right"><span class="person-badge ${badgeCls}">${badgeTxt}</span><div class="person-card-actions" onclick="event.stopPropagation()"><button class="pca-btn" onclick="editPanelItem('cli',${c.id})" title="Editar">✎</button><button class="pca-btn del" onclick=\"deletePanelItem('cli','${c.id}')\" title="Eliminar">×</button></div><span class="person-chevron">▾</span></div></div><div class="person-detail">${debtSummary}${rows}</div></div>`;
   }).join('');
   document.getElementById('panelCliSub').textContent=filtered.length+' cliente'+(filtered.length!==1?'s':'');
   document.getElementById('panelCliTotalDebt').textContent=fmt(totalDebt);
@@ -2995,7 +3076,7 @@ function renderProvPanel() {
     const total=pays.reduce((sum,e)=>sum+e.amount,0); grand+=total;
     const isOpen=_expanded.prov.has(s.id);
     const rows=pays.length?pays.map(e=>{ const d=new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'}); return `<div class="person-detail-row"><div class="pdr-left"><div class="pdr-desc">${e.desc}</div><div class="pdr-date">${d}${e.time?' · '+e.time:''} · ${PAY_LBL[e.pay]||'Efectivo'}</div></div><div class="pdr-right"><div class="pdr-amt" style="color:var(--k-expense);">−${fmt(e.amount)}</div></div></div>`; }).join(''): `<div style="padding:14px;font-family:var(--sans);font-size:12px;color:var(--k-text-3);text-align:center;">Sin pagos registrados</div>`;
-    return `<div class="person-card${isOpen?' expanded':''}"><div class="person-card-head" onclick="togglePersonCard('prov',${s.id})"><div class="person-card-info"><div class="person-card-name">${s.name}</div><div class="person-card-meta">${s.phone||'Sin teléfono'} · ${pays.length} pago${pays.length!==1?'s':''}</div></div><div class="person-card-right"><span class="person-badge ${total>0?'spent':'zero'}">${total>0?fmt(total)+' pagado':'Sin pagos'}</span><div class="person-card-actions" onclick="event.stopPropagation()"><button class="pca-btn" onclick="editPanelItem('prov',${s.id})" title="Editar">✎</button><button class="pca-btn del" onclick="deletePanelItem('prov',${s.id})" title="Eliminar">×</button></div><span class="person-chevron">▾</span></div></div><div class="person-detail">${rows}</div></div>`;
+    return `<div class="person-card${isOpen?' expanded':''}"><div class="person-card-head" onclick="togglePersonCard('prov',${s.id})"><div class="person-card-info"><div class="person-card-name">${s.name}</div><div class="person-card-meta">${s.phone||'Sin teléfono'} · ${pays.length} pago${pays.length!==1?'s':''}</div></div><div class="person-card-right"><span class="person-badge ${total>0?'spent':'zero'}">${total>0?fmt(total)+' pagado':'Sin pagos'}</span><div class="person-card-actions" onclick="event.stopPropagation()"><button class="pca-btn" onclick="editPanelItem('prov',${s.id})" title="Editar">✎</button><button class="pca-btn del" onclick=\"deletePanelItem('prov','${s.id}')\" title="Eliminar">×</button></div><span class="person-chevron">▾</span></div></div><div class="person-detail">${rows}</div></div>`;
   }).join('');
   document.getElementById('panelProvSub').textContent=filtered.length+' proveedor'+(filtered.length!==1?'es':'');
   document.getElementById('panelProvTotal').textContent=fmt(grand);
@@ -3018,12 +3099,47 @@ function renderInvPanel() {
   const filtered=products.filter(p=>!q||p.name.toLowerCase().includes(q)).sort((a,b)=>{ const sa=salesMap[a.name.toLowerCase()]?.total||0; const sb=salesMap[b.name.toLowerCase()]?.total||0; return sb-sa||a.name.localeCompare(b.name,'es'); });
   let grand=0;
   list.innerHTML=filtered.map(p=>{ const key=p.name.toLowerCase().trim(); const s=salesMap[key]; const total=s?.total||0; grand+=total; const qty=s?.qty||0; const cnt=s?.count||0;
-    return `<div class="inv-card"><div class="inv-card-left"><div class="inv-card-name">${p.name}</div><div class="inv-card-meta">${cnt} venta${cnt!==1?'s':''} · ${qty} unidades</div></div><div class="inv-card-right"><div class="inv-price">S/${p.price.toFixed(2)}</div><div class="inv-sold">${total>0?fmt(total)+' vendido':'Sin ventas'}</div></div><div class="inv-card-actions"><button class="pca-btn" onclick="editPanelItem('inv',${p.id})" title="Editar">✎</button><button class="pca-btn del" onclick="deletePanelItem('inv',${p.id})" title="Eliminar">×</button></div></div>`;
+    return `<div class="inv-card"><div class="inv-card-left"><div class="inv-card-name">${p.name}</div><div class="inv-card-meta">${cnt} venta${cnt!==1?'s':''} · ${qty} unidades</div></div><div class="inv-card-right"><div class="inv-price">S/${p.price.toFixed(2)}</div><div class="inv-sold">${total>0?fmt(total)+' vendido':'Sin ventas'}</div></div><div class="inv-card-actions"><button class="pca-btn" onclick="editPanelItem('inv',${p.id})" title="Editar">✎</button><button class="pca-btn del" onclick=\"deletePanelItem('inv','${p.id}')\" title="Eliminar">×</button></div></div>`;
   }).join('');
   document.getElementById('panelInvSub').textContent=filtered.length+' producto'+(filtered.length!==1?'s':'');
   document.getElementById('panelInvTotal').textContent=fmt(grand);
   document.getElementById('panelInvCount').textContent=filtered.length+'';
 }
+/* ══════════════════════════════════════════
+   PANEL: CRÉDITOS POR COBRAR
+══════════════════════════════════════════ */
+function renderCredPanel() {
+  const list = document.getElementById('panelCredList');
+  const pending = entries.filter(e => e.credit).sort((a,b) => b.date.localeCompare(a.date));
+  const total = pending.reduce((s,e) => s+e.amount, 0);
+
+  document.getElementById('panelCredTotal').textContent = fmt(total);
+  document.getElementById('panelCredCount').textContent = pending.length + '';
+  document.getElementById('panelCredSub').textContent =
+    pending.length === 0 ? 'Sin créditos pendientes' :
+    pending.length + ' crédito' + (pending.length !== 1 ? 's' : '') + ' pendiente' + (pending.length !== 1 ? 's' : '');
+
+  if(!pending.length) {
+    list.innerHTML = `<div class="panel-empty"><p>✅ Sin créditos pendientes.<br>Todo cobrado.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = pending.map(e => {
+    const fechaLbl = new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'numeric',month:'short',year:'numeric'});
+    return `
+      <div class="cred-card">
+        <div class="cred-card-left">
+          <div class="cred-card-client">${e.client || 'Sin cliente'}</div>
+          <div class="cred-card-meta">${e.desc} · ${fechaLbl}</div>
+        </div>
+        <div class="cred-card-right">
+          <div class="cred-card-amt">S/ ${e.amount.toFixed(2)}</div>
+          <button class="cred-cobrar-btn" onclick="cobrarEntry('${e.id}');closePanel('cred');">✓ Cobrar</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 /* ══════════════════════════════════════════
    SETTINGS MODAL
 ══════════════════════════════════════════ */
@@ -3373,7 +3489,7 @@ function runGlobalSearch() {
     const amtSign  = isCredit ? '' : (e.type==='expense' ? '−' : '+');
     const d = new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'});
     const meta = [d, e.time||'', e.client ? hl(e.client) : '', PAY_LBL[e.pay]||'Efectivo'].filter(Boolean).join(' · ');
-    return `<div class="search-result-item" onclick="jumpToEntry(${e.id})">
+    return `<div class="search-result-item" onclick="jumpToEntry('${e.id}')">
       <span class="sri-dot ${dotCls}"></span>
       <div class="sri-info">
         <div class="sri-desc">${hl(e.desc)}</div>
@@ -3385,7 +3501,7 @@ function runGlobalSearch() {
 }
 
 function jumpToEntry(id) {
-  const e = entries.find(x => x.id === id); if(!e) return;
+  const e = entries.find(x => String(x.id) === String(id)); if(!e) return;
   searchOpen = false;
   document.getElementById('searchOverlay').classList.remove('open');
   document.getElementById('btnSearch').classList.remove('active');
@@ -3539,161 +3655,125 @@ function setFilter(f,el) {
 function save(){ localStorage.setItem('kajita_v4', JSON.stringify(entries)); }
 function fmt(n){ return 'S/ '+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
 
-function togglePendingExpanded() {
-  pendingOpen = !pendingOpen;
-  const wrap = document.getElementById('pendingExpandedWrap');
-  const bar = document.getElementById('pendingBar');
-  
-  if (pendingOpen) {
-    wrap.classList.add('open'); bar.classList.add('expanded');
-    document.getElementById('pbLinkText').innerHTML = 'Ocultar ▲';
-    renderPendingExpanded();
-  } else {
-    wrap.classList.remove('open'); bar.classList.remove('expanded');
-    document.getElementById('pbLinkText').innerHTML = 'Ver pendientes ▼';
-  }
-}
-
-function renderPendingExpanded() {
-  const wrap = document.getElementById('pendingExpandedWrap');
-  const pend = entries.filter(e => e.credit).sort((a,b) => b.date.localeCompare(a.date));
-  
-  if (pend.length === 0) {
-    wrap.innerHTML = '<div style="text-align:center; padding:16px; color:var(--k-text-3); font-size:12px;">Ya no hay pendientes.</div>'; return;
-  }
-  wrap.innerHTML = pend.map(c => `
-    <div class="pe-item">
-      <div class="pe-info">
-        <div class="pe-client">${c.client || 'Sin nombre de cliente'}</div>
-        <div class="pe-desc">${c.desc} <span class="pe-date">${new Date(c.date+'T12:00:00').toLocaleDateString('es-PE',{day:'numeric',month:'short'})}</span></div>
-      </div>
-      <div class="pe-amt">${fmt(c.amount)}</div>
-      <button class="abtn cobrar" onclick="event.stopPropagation(); cobrarEntry(${c.id})">✓ Cobrar</button>
-    </div>
-  `).join('');
-}
+// Funciones de barra pendientes removidas (ahora en panel lateral de Créditos)
+function togglePendingExpanded() {}
+function renderPendingExpanded() {}
 
 async function submitEntry(){
   const desc     = document.getElementById('iDesc').value.trim();
   const amount   = parseFloat(document.getElementById('iAmt').value);
   const qty      = parseInt(document.getElementById('iQty').value)||null;
   const unitPrice= parseFloat(document.getElementById('iUnitPrice').value)||null;
-  const date     = activeDay;
   const credit   = document.getElementById('iCredit').checked;
   const client   = document.getElementById('iClient').value.trim();
+
+  // Validaciones básicas
   if(!desc){toast('Escribe una descripción');return;}
   if(!amount||amount<=0){toast('Ingresa un monto válido');return;}
   if(credit&&!client){toast('Escribe el nombre del cliente');return;}
 
+  // Asegurar que activeDay esté seteado
+  if(!activeDay) {
+    const now = new Date();
+    activeDay = now.getFullYear() + '-' +
+      String(now.getMonth()+1).padStart(2,'0') + '-' +
+      String(now.getDate()).padStart(2,'0');
+  }
+  const date = activeDay;
+
   const isIncome = cType==='income';
   const isCredit = credit && isIncome;
-  const payment = isCredit ? 'credit' : cPay;
-  // Formato HH:MM:SS válido para Supabase
+  const payment  = isCredit ? 'credit' : cPay;
   const _now = new Date();
-  const time = String(_now.getHours()).padStart(2,'0') + ':' + String(_now.getMinutes()).padStart(2,'0') + ':' + String(_now.getSeconds()).padStart(2,'0');
+  const time = String(_now.getHours()).padStart(2,'0') + ':' +
+               String(_now.getMinutes()).padStart(2,'0') + ':' +
+               String(_now.getSeconds()).padStart(2,'0');
 
-  if(editId!==null){
-    // EDITAR existente
-    const idx=entries.findIndex(e=>e.id===editId);
-    if(idx!==-1) {
-      entries[idx]={
+  if(editId !== null){
+    // ── EDITAR ──
+    const idx = entries.findIndex(e => String(e.id) === String(editId));
+    if(idx !== -1){
+      entries[idx] = {
         ...entries[idx],
-        type:cType, desc, amount, qty, unitPrice,
-        pay: payment,
-        date,
-        credit: isCredit,
-        client: client,
-        paid: isCredit ? entries[idx].paid : undefined
+        type: cType, desc, amount, qty, unitPrice,
+        pay: payment, date,
+        credit: isCredit, client,
+        paid: isCredit ? entries[idx].paid : false
       };
-      
-      // Sync con Supabase si está logueado y tiene UUID
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof editId === 'string' && editId.length === 36) {
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')){
         try {
           await sb.from('entries').update({
-            type: cType,
-            description: desc,
-            amount: amount,
-            payment_type: payment,
-            date: date,
-            is_credit: isCredit,
-            client_name: client || null,
-            is_paid: entries[idx].paid || false
+            type: cType, description: desc, amount,
+            payment_type: payment, date,
+            is_credit: isCredit, client_name: client||null,
+            is_paid: entries[idx].paid||false
           }).eq('id', editId).eq('user_id', currentUser.id);
-        } catch(e) {
-          console.error('Error updating in Supabase:', e);
-        }
+        } catch(e){ console.error('Error edit Supabase:', e); }
       }
     }
-    toast('✓ Movimiento actualizado'); 
+    toast('✓ Movimiento actualizado');
     cancelEdit();
+
   } else {
-    // CREAR nuevo
-    let newId = Date.now(); // ID temporal local
-    
-    // Si hay usuario logueado real, crear primero en Supabase
-    if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+    // ── CREAR NUEVO ──
+    let newId = String(Date.now()); // fallback local
+
+    if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')){
       try {
         const { data, error } = await sb.from('entries').insert([{
-          user_id: currentUser.id,
-          type: cType,
-          description: desc,
-          amount: amount,
+          user_id:      currentUser.id,
+          type:         cType,
+          description:  desc,
+          amount:       amount,
           payment_type: payment,
-          date: date,
-          time: time,
-          is_credit: isCredit,
-          client_name: client || null,
-          is_paid: false
+          date:         date,
+          time:         time,
+          is_credit:    isCredit,
+          client_name:  client||null,
+          is_paid:      false
         }]).select().single();
-        
-        if(error) {
-          console.error('Supabase error:', error);
-          toast('✗ Error al guardar: ' + error.message);
+
+        if(error){
+          console.error('Supabase insert error:', error);
+          toast('✗ Error: ' + (error.message||'Intenta de nuevo'));
           return;
         }
-        
-        // Usar UUID de Supabase como ID
         newId = data.id;
-      } catch(e) {
-        console.error('Error creating entry:', e);
-        toast('✗ Error: ' + e.message);
+      } catch(e){
+        console.error('submitEntry catch:', e);
+        toast('✗ Error al guardar');
         return;
       }
     }
-    
-    // Agregar a memoria con el ID correcto
+
     entries.unshift({
-      id: newId, 
-      type: cType, desc, amount, qty, unitPrice,
-      pay: payment,
-      date, 
-      time: time,
-      credit: isCredit,
-      client: client,
-      paid: false
+      id: newId, type: cType, desc, amount, qty, unitPrice,
+      pay: payment, date, time,
+      credit: isCredit, client, paid: false
     });
-    
+
     // Limpiar formulario
-    document.getElementById('iDesc').value=''; 
-    document.getElementById('iAmt').value='';
-    document.getElementById('iQty').value=''; 
-    document.getElementById('iUnitPrice').value='';
-    document.getElementById('iClient').value=''; 
-    document.getElementById('iCredit').checked=false;
+    document.getElementById('iDesc').value      = '';
+    document.getElementById('iAmt').value       = '';
+    document.getElementById('iQty').value       = '';
+    document.getElementById('iUnitPrice').value = '';
+    document.getElementById('iClient').value    = '';
+    document.getElementById('iCredit').checked  = false;
     onCreditToggle();
-    toast(isCredit ? '⏳ Venta a crédito registrada':(isIncome?'✓ Ingreso registrado':'✓ Egreso registrado'));
+    toast(isCredit ? '⏳ Crédito registrado' : (isIncome ? '✓ Ingreso registrado' : '✓ Egreso registrado'));
   }
-  save(); 
-  buildDayBar(); 
+
+  save();
+  buildDayBar();
   render();
 }
 
 async function cobrarEntry(id){
-  const e=entries.find(x=>x.id===id); if(!e) return;
+  const e=entries.find(x=>String(x.id)===String(id)); if(!e) return;
   e.paid=true; e.credit=false; e.pay='cash'; e.paidAt=new Date().toISOString();
   
   // Sync con Supabase
-  if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof id === 'string' && id.length === 36) {
+  if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
     try {
       await sb.from('entries').update({
         is_credit: false,
@@ -3709,7 +3789,7 @@ async function cobrarEntry(id){
 }
 
 function editEntry(id){
-  const e=entries.find(x=>x.id===id); if(!e) return;
+  const e=entries.find(x=>String(x.id)===String(id)); if(!e) return;
   editId=id;
   document.getElementById('iDesc').value=e.desc;
   document.getElementById('iAmt').value=e.amount;
@@ -3731,7 +3811,7 @@ function editEntry(id){
 }
 
 function delEntry(id){
-  const e = entries.find(x=>x.id===id); if(!e) return;
+  const e = entries.find(x=>String(x.id)===String(id)); if(!e) return;
   const sign = e.credit ? '' : (e.type==='expense'?'−':'+');
   showConfirm({
     icon: e.type==='expense' ? '💸' : '💰',
@@ -3741,7 +3821,7 @@ function delEntry(id){
       if(editId===id) cancelEdit();
       
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && typeof id === 'string' && id.length === 36) {
+      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
         try {
           await sb.from('entries').delete().eq('id', id).eq('user_id', currentUser.id);
         } catch(err) {
@@ -3749,7 +3829,7 @@ function delEntry(id){
         }
       }
       
-      entries = entries.filter(x=>x.id!==id);
+      entries = entries.filter(x=>String(x.id)!==String(id));
       save(); buildDayBar(); render();
       toast('Movimiento eliminado');
     }
@@ -3776,8 +3856,8 @@ function cancelEdit(){
 
 /* ── RECIBO INDIVIDUAL DE MOVIMIENTO ── */
 function generateReceipt(id) {
-  const e = entries.find(x => x.id === id);
-  if(!e) { toast('Movimiento no encontrado'); return; }
+  const e = entries.find(x => String(x.id) === String(id));
+  if(!e) { toast('⚠️ Movimiento no encontrado'); return; }
 
   const d = new Date(e.date + 'T12:00:00');
   const dateStr  = d.toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
@@ -4175,8 +4255,7 @@ function render(){ renderHeader(); renderStats(); renderEntries(); renderPending
 
 function renderHeader(){
   if(!activeDay) return;
-  const d=new Date(activeDay+'T12:00:00');
-  // Usar fecha LOCAL del sistema (no UTC)
+  const d = new Date(activeDay+'T12:00:00');
   const now = new Date();
   const todayStr = now.getFullYear() + '-' +
     String(now.getMonth()+1).padStart(2,'0') + '-' +
@@ -4185,8 +4264,31 @@ function renderHeader(){
   const ydayStr = yDay.getFullYear() + '-' +
     String(yDay.getMonth()+1).padStart(2,'0') + '-' +
     String(yDay.getDate()).padStart(2,'0');
-  document.getElementById('dayLabel').textContent=activeDay===todayStr?'HOY':activeDay===ydayStr?'Ayer':d.toLocaleDateString('es-PE',{weekday:'long'});
-  document.getElementById('dayTitle').textContent=d.toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'});
+  const isToday = activeDay === todayStr;
+  const isYday  = activeDay === ydayStr;
+
+  // Actualizar elementos del header (pueden no existir si fueron removidos)
+  const dayLabel = document.getElementById('dayLabel');
+  const dayTitle = document.getElementById('dayTitle');
+  if(dayLabel) dayLabel.textContent = isToday ? 'HOY' : isYday ? 'Ayer' : d.toLocaleDateString('es-PE',{weekday:'long'});
+  if(dayTitle) dayTitle.textContent = d.toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'});
+
+  // Actualizar chip de fecha en el form
+  const chip = document.getElementById('dateChip');
+  const chipLabel = document.getElementById('dateChipLabel');
+  if(!chip || !chipLabel) return;
+
+  if(isToday) {
+    chipLabel.textContent = 'HOY · ' + d.toLocaleDateString('es-PE',{day:'numeric',month:'short'});
+    chip.classList.remove('is-past');
+  } else if(isYday) {
+    chipLabel.textContent = 'Ayer · ' + d.toLocaleDateString('es-PE',{day:'numeric',month:'short'});
+    chip.classList.add('is-past');
+  } else {
+    // Mostrar fecha completa: "lun · 19 may"
+    chipLabel.textContent = d.toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    chip.classList.add('is-past');
+  }
 }
 
 function renderStats(){
@@ -4207,35 +4309,24 @@ function renderStats(){
   document.getElementById('cashNet').textContent=(cNet<0?'−':'')+fmt(Math.abs(cNet));
   document.getElementById('digNet').textContent=(dNet<0?'−':'')+fmt(Math.abs(dNet));
 
-  const balEl=document.getElementById('totalBalance');
-  balEl.textContent=(bal<0?'−':'')+fmt(Math.abs(bal));
-  balEl.className='balance-amount '+(bal>=0?'positive':'negative');
+  const balEl = document.getElementById('totalBalance');
+  balEl.textContent = (bal<0?'−':'') + fmt(Math.abs(bal));
+  // Actualizar color de la tarjeta balance
+  const balCard = balEl.closest('.stat-card');
+  if(balCard) {
+    balCard.classList.remove('positive','negative');
+    balCard.classList.add(bal>=0 ? 'positive' : 'negative');
+  }
 
-  const pendEl=document.getElementById('balancePending');
+  const pendEl = document.getElementById('balancePending');
   if(cred>0){
     pendEl.style.display='block';
-    pendEl.textContent='+ '+fmt(cred)+' pendiente de cobro';
+    pendEl.textContent='+ '+fmt(cred)+' pendiente';
   } else { pendEl.style.display='none'; }
 }
 
 function renderPendingBar(){
-  const pending=entries.filter(e=>e.credit);
-  const bar=document.getElementById('pendingBar');
-  const wrap=document.getElementById('pendingExpandedWrap');
-  
-  if(pending.length===0){ 
-    bar.classList.remove('visible'); 
-    wrap.classList.remove('open');
-    pendingOpen = false;
-    return; 
-  }
-  
-  bar.classList.add('visible');
-  const total=pending.reduce((s,e)=>s+e.amount,0);
-  document.getElementById('pendingBarText').textContent=pending.length+' venta'+(pending.length>1?'s':'')+' a crédito pendiente'+(pending.length>1?'s':'');
-  document.getElementById('pendingBarAmt').textContent=fmt(total)+' por cobrar en total';
-
-  if(pendingOpen) { renderPendingExpanded(); }
+  // La barra de pendientes fue removida — créditos ahora en panel lateral
 }
 
 function renderEntries(){
@@ -4270,7 +4361,7 @@ function renderEntries(){
         ? `<span class="pbadge credit">⏳ Crédito${e.client?' · '+e.client:''}</span>`
         : `<span class="pbadge ${e.pay||'cash'}">${PAY_LBL[e.pay]||'Efectivo'}</span>`;
       const cobrarBtn=isCredit
-        ? `<button class="abtn cobrar" onclick="cobrarEntry(${e.id})" title="Marcar como cobrado">✓ Cobrar</button>`
+        ? `<button class="abtn cobrar" onclick="cobrarEntry('${e.id}')" title="Marcar como cobrado">✓ Cobrar</button>`
         : '';
       const amtStr=isCredit ? fmt(e.amount) : (e.type==='expense'?'−':'+')+ fmt(e.amount);
       return `
@@ -4287,12 +4378,12 @@ function renderEntries(){
           </div>
           <div class="eamt ${amtClass}">${amtStr}</div>
           <div class="eactions">
-            <button class="abtn-menu" onclick="toggleEntryMenu(event,${e.id})" title="Acciones">···</button>
+            <button class="abtn-menu" onclick="toggleEntryMenu(event,'${e.id}')" title="Acciones">···</button>
             <div class="entry-popover" id="emenu-${e.id}">
-              ${isCredit ? `<button class="ep-item ep-cobrar" onclick="closeAllMenus();cobrarEntry(${e.id})"><span class="ep-ic">✓</span>Cobrar</button>` : ''}
-              <button class="ep-item" onclick="closeAllMenus();generateReceipt(${e.id})"><span class="ep-ic">🧾</span>Generar recibo</button>
-              <button class="ep-item" onclick="closeAllMenus();editEntry(${e.id})"><span class="ep-ic">✎</span>Editar</button>
-              <button class="ep-item ep-del" onclick="closeAllMenus();delEntry(${e.id})"><span class="ep-ic">×</span>Eliminar</button>
+              ${isCredit ? `<button class="ep-item ep-cobrar" onclick="closeAllMenus();cobrarEntry('${e.id}')"><span class="ep-ic">✓</span>Cobrar</button>` : ''}
+              <button class="ep-item" onclick="closeAllMenus();generateReceipt('${e.id}')"><span class="ep-ic">🧾</span>Generar recibo</button>
+              <button class="ep-item" onclick="closeAllMenus();editEntry('${e.id}')"><span class="ep-ic">✎</span>Editar</button>
+              <button class="ep-item ep-del" onclick="closeAllMenus();delEntry('${e.id}')"><span class="ep-ic">×</span>Eliminar</button>
             </div>
           </div>
         </div>`;
