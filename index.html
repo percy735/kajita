@@ -1639,7 +1639,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v6.8-SUBMIT</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v6.9-CLEAN</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -4403,283 +4403,202 @@ function toast(msg){
 
 <!-- ══════════════════════════════════════════════════════════════ -->
 <!-- SUPABASE CON AUTENTICACIÓN -->
-<!-- ══════════════════════════════════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL='https://xdjqawfikdlxxelabetg.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkanFhd2Zpa2RseHhlbGFiZXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDYwMTAsImV4cCI6MjA5NDUyMjAxMH0.h_-97MAKlbrCaFJQbLzQgRa9X33GgbpxuXEuqHhOGOo';
-var sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+var sb = window.supabase.createClient(
+  'https://xdjqawfikdlxxelabetg.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkanFhd2Zpa2RseHhlbGFiZXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDYwMTAsImV4cCI6MjA5NDUyMjAxMH0.h_-97MAKlbrCaFJQbLzQgRa9X33GgbpxuXEuqHhOGOo'
+);
 var currentUser = null;
+var appStarted = false;
 
-// ══ FUNCIONES DE AUTENTICACIÓN ══
-async function handleDemoLogin(){
-  try{
-    // Usuario demo especial (sin autenticación real)
-    currentUser={
-      id:'demo-user-00000000-0000-0000-0000-000000000000',
-      email:'demo@kajita.app',
-      user_metadata:{business_name:'Demo - Prueba Kajita'}
-    };
-    
-    document.getElementById('authScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    
-    // Demo: poner bizProfile directo sin Supabase
-    bizProfile = { name: 'Demo - Prueba Kajita', rubro: 'Servicios', createdAt: new Date().toISOString() };
-    const today = new Date();
-    activeDay = today.getFullYear() + '-' +
-      String(today.getMonth()+1).padStart(2,'0') + '-' +
-      String(today.getDate()).padStart(2,'0');
-    buildDayBar();
-    render();
-    applyBizProfile();
-    
-    toast('🚀 Modo Demo - ¡Explora Kajita libremente!');
-  }catch(err){
-    showAuthError('Error al acceder al modo demo');
-    console.error(err);
+// ── HELPERS ──
+function getToday(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function showApp(){
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+}
+
+function showAuth(){
+  document.getElementById('authScreen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ── CARGAR DATOS DESDE SUPABASE ──
+async function loadDB(){
+  if(!currentUser) return;
+  const uid = currentUser.id;
+  try {
+    const [eRes, pRes, cRes, prRes] = await Promise.all([
+      sb.from('entries').select('*').eq('user_id', uid).order('date', {ascending:false}).order('time', {ascending:false}),
+      sb.from('products').select('*').eq('user_id', uid).order('name'),
+      sb.from('clients').select('*').eq('user_id', uid).order('name'),
+      sb.from('profiles').select('business_name,business_rubro').eq('id', uid).single()
+    ]);
+
+    if(eRes.data) entries = eRes.data.map(x=>({
+      id: x.id, type: x.type, desc: x.description,
+      amount: parseFloat(x.amount), pay: x.payment_type,
+      date: x.date, time: x.time,
+      credit: x.is_credit, client: x.client_name||'', paid: x.is_paid
+    }));
+
+    if(pRes.data) products = pRes.data.map(x=>({id:x.id, name:x.name, price:parseFloat(x.price)}));
+    if(cRes.data) clients  = cRes.data.map(x=>({id:x.id, name:x.name, phone:x.phone||''}));
+
+    if(prRes.data && prRes.data.business_name){
+      bizProfile = {name: prRes.data.business_name, rubro: prRes.data.business_rubro||''};
+      localStorage.setItem('kajita_biz', JSON.stringify(bizProfile));
+    }
+    console.log('✓ loadDB:', entries.length, 'entries,', clients.length, 'clients,', products.length, 'products');
+  } catch(err){
+    console.error('loadDB error:', err);
   }
 }
 
-function switchAuthTab(tab){
-  document.getElementById('tabLogin').classList.toggle('active',tab==='login');
-  document.getElementById('tabRegister').classList.toggle('active',tab==='register');
-  document.getElementById('panelLogin').style.display=tab==='login'?'':'none';
-  document.getElementById('panelRegister').style.display=tab==='register'?'':'none';
-  document.getElementById('authError').style.display='none';
+// ── INICIAR APP ──
+async function startApp(){
+  if(appStarted){ render(); return; }
+  appStarted = true;
+  showApp();
+  activeDay = getToday();
+  await loadDB();
+  buildDayBar();
+  render();
+  applyBizProfile();
+  checkOnboarding();
+}
+
+// ── DEMO ──
+async function handleDemoLogin(){
+  currentUser = {
+    id: 'demo-user-00000000-0000-0000-0000-000000000000',
+    email: 'demo@kajita.app',
+    user_metadata: {business_name:'Demo - Prueba Kajita'}
+  };
+  bizProfile = {name:'Demo - Prueba Kajita', rubro:'Servicios'};
+  showApp();
+  activeDay = getToday();
+  entries=[]; products=[]; clients=[];
+  buildDayBar(); render(); applyBizProfile();
+  toast('🚀 Modo Demo activo');
+}
+
+// ── LOGIN ──
+function showAuthError(msg, type='error'){
+  const el = document.getElementById('authError');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.color = type==='success' ? 'var(--k-accent)' : 'var(--k-expense)';
 }
 
 async function handleLogin(e){
   e.preventDefault();
-  const email=document.getElementById('loginEmail').value.trim();
-  const password=document.getElementById('loginPassword').value;
-  const btn=document.getElementById('loginBtn');
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn      = document.getElementById('loginBtn');
   
-  btn.disabled=true;
-  document.getElementById('loginText').style.display='none';
-  document.getElementById('loginLoader').style.display='inline';
-  document.getElementById('authError').style.display='none';
-  
-  try{
-    const{data,error}=await sb.auth.signInWithPassword({email,password});
-    if(error)throw error;
-  }catch(err){
-    showAuthError(err.message.includes('Invalid')?'Email o contraseña incorrectos':'Error al iniciar sesión');
-    btn.disabled=false;
-    document.getElementById('loginText').style.display='inline';
-    document.getElementById('loginLoader').style.display='none';
+  if(!email||!password){ showAuthError('Completa todos los campos'); return; }
+  btn.disabled = true;
+  document.getElementById('loginText').style.display  = 'none';
+  document.getElementById('loginLoader').style.display = 'inline';
+  document.getElementById('authError').style.display  = 'none';
+
+  try {
+    const {data, error} = await sb.auth.signInWithPassword({email, password});
+    if(error) throw error;
+    // onAuthStateChange lo maneja
+  } catch(err){
+    showAuthError(err.message.includes('Invalid')||err.message.includes('credentials') ? 'Email o contraseña incorrectos' : 'Error: '+err.message);
+    btn.disabled = false;
+    document.getElementById('loginText').style.display  = 'inline';
+    document.getElementById('loginLoader').style.display = 'none';
   }
 }
 
+// ── REGISTRO ──
 async function handleRegister(e){
   e.preventDefault();
-  const business=document.getElementById('registerBusiness').value.trim();
-  const email=document.getElementById('registerEmail').value.trim();
-  const password=document.getElementById('registerPassword').value;
-  const btn=document.getElementById('registerBtn');
-  
-  if(!business){showAuthError('Ingresa el nombre de tu negocio');return;}
-  if(!email){showAuthError('Ingresa tu email');return;}
-  if(password.length<6){showAuthError('Contraseña debe tener 6+ caracteres');return;}
-  
-  btn.disabled=true;
-  document.getElementById('registerText').style.display='none';
-  document.getElementById('registerLoader').style.display='inline';
-  document.getElementById('authError').style.display='none';
-  
-  try{
-    const{data,error}=await sb.auth.signUp({
-      email,
-      password,
-      options:{
-        data:{business_name:business}
-      }
-    });
-    
-    if(error)throw error;
-    
+  const business = document.getElementById('registerBusiness').value.trim();
+  const email    = document.getElementById('registerEmail').value.trim();
+  const password = document.getElementById('registerPassword').value;
+  const btn      = document.getElementById('registerBtn');
+
+  if(!business){ showAuthError('Ingresa el nombre de tu negocio'); return; }
+  if(!email)   { showAuthError('Ingresa tu email'); return; }
+  if(password.length<6){ showAuthError('Contraseña mínimo 6 caracteres'); return; }
+
+  btn.disabled = true;
+  document.getElementById('registerText').style.display  = 'none';
+  document.getElementById('registerLoader').style.display = 'inline';
+  document.getElementById('authError').style.display     = 'none';
+
+  try {
+    const {data, error} = await sb.auth.signUp({email, password, options:{data:{business_name:business}}});
+    if(error) throw error;
     if(data.user){
-      // Crear perfil
-      const{error:profileError}=await sb.from('profiles').upsert([
-        {id:data.user.id,business_name:business}
-      ],{onConflict:'id'});
-      
-      if(profileError)console.error('Profile error:',profileError);
-      
-      showAuthError('¡Cuenta creada! Entrando...','success');
-      setTimeout(async()=>{
-        currentUser=data.user;
-        await startApp();
-      },1500);
+      await sb.from('profiles').upsert([{id:data.user.id, business_name:business}]);
+      showAuthError('¡Cuenta creada! Iniciando...','success');
     }
-  }catch(err){
-    let msg='Error al crear cuenta';
-    if(err.message.includes('already'))msg='Email ya registrado';
-    if(err.message.includes('Password'))msg='Contraseña debe tener 6+ caracteres';
-    if(err.message.includes('valid email'))msg='Email inválido';
-    showAuthError(msg);
-    btn.disabled=false;
-    document.getElementById('registerText').style.display='inline';
-    document.getElementById('registerLoader').style.display='none';
+  } catch(err){
+    showAuthError('Error: '+err.message);
+    btn.disabled = false;
+    document.getElementById('registerText').style.display  = 'inline';
+    document.getElementById('registerLoader').style.display = 'none';
   }
 }
 
-function showAuthError(msg,type='error'){
-  const el=document.getElementById('authError');
-  el.textContent=msg;
-  el.style.display='block';
-  if(type==='success'){
-    el.style.background='rgba(196,240,66,0.12)';
-    el.style.borderColor='var(--k-accent)';
-    el.style.color='var(--k-accent)';
-  }else{
-    el.style.background='rgba(255,107,107,0.12)';
-    el.style.borderColor='var(--k-expense)';
-    el.style.color='var(--k-expense)';
-  }
+// ── LOGOUT ──
+async function handleLogout(){
+  if(!confirm('¿Cerrar sesión?')) return;
+  const wasDemo = currentUser?.id?.includes('demo-user');
+  try { localStorage.clear(); } catch(e){}
+  currentUser = null; appStarted = false;
+  entries=[]; products=[]; clients=[]; bizProfile=null;
+  if(!wasDemo){ try{ await sb.auth.signOut(); }catch(e){} }
+  window.location.href = window.location.pathname+'?t='+Date.now();
 }
 
-// ══ FUNCIÓN CENTRAL PARA INICIAR APP ══
-async function startApp() {
-  // 1. Mostrar app
-  document.getElementById('authScreen').style.display='none';
-  document.getElementById('app').style.display='block';
-  
-  // 2. Setear fecha LOCAL PRIMERO (antes de loadDB y render)
-  const todayDate = new Date();
-  activeDay = todayDate.getFullYear() + '-' +
-    String(todayDate.getMonth()+1).padStart(2,'0') + '-' +
-    String(todayDate.getDate()).padStart(2,'0');
-  
-  // 3. Cargar datos de Supabase (incluye bizProfile)
-  await loadDB();
-  
-  // 4. Renderizar barra de días y contenido
-  buildDayBar();
-  render();
-  
-  // 5. Aplicar perfil del negocio (nombre en topbar)
-  applyBizProfile();
-  
-  // 6. Decidir si mostrar onboarding (DESPUÉS de cargar perfil)
-  checkOnboarding();
-}
-
-// ══ LISTENER DE SESIÓN ══
-sb.auth.onAuthStateChange(async(event,session)=>{
-  if(event==='SIGNED_IN'&&session){
-    currentUser=session.user;
-    await startApp();
-  }else if(event==='SIGNED_OUT'){
-    currentUser=null;
-    entries=[];products=[];clients=[];
-    bizProfile=null;
-    document.getElementById('authScreen').style.display='flex';
-    document.getElementById('app').style.display='none';
-  }
-});
-
-// ══ VERIFICAR SESIÓN AL CARGAR ══
-async function checkAuth(){
-  const{data:{session}}=await sb.auth.getSession();
-  if(session){
-    currentUser=session.user;
-    await startApp();
-  }else{
-    document.getElementById('authScreen').style.display='flex';
-    document.getElementById('app').style.display='none';
-  }
-}
-window.addEventListener('DOMContentLoaded',checkAuth);
-
-// ══ CARGAR DATOS DEL USUARIO ══
-async function loadDB(){
-  if(!currentUser)return;
-  const uid=currentUser.id;
-  
-  try{
-    // Cargar perfil del negocio desde Supabase
-    const{data:profile}=await sb.from('profiles').select('business_name,business_rubro').eq('id',uid).single();
-    if(profile && profile.business_name){
-      bizProfile = { 
-        name: profile.business_name, 
-        rubro: profile.business_rubro || '',
-        createdAt: bizProfile?.createdAt || new Date().toISOString()
-      };
-      localStorage.setItem('kajita_biz', JSON.stringify(bizProfile));
-    }
-
-    const{data:e}=await sb.from('entries').select('*').eq('user_id',uid).order('date',{ascending:false});
-    if(e)entries=e.map(x=>({id:x.id,type:x.type,desc:x.description,amount:parseFloat(x.amount),pay:x.payment_type,date:x.date,time:x.time,credit:x.is_credit,client:x.client_name||'',paid:x.is_paid}));
-    
-    const{data:p}=await sb.from('products').select('*').eq('user_id',uid).order('name');
-    if(p)products=p.map(x=>({id:x.id,name:x.name,price:parseFloat(x.price)}));
-    
-    const{data:c}=await sb.from('clients').select('*').eq('user_id',uid).order('name');
-    if(c)clients=c.map(x=>({id:x.id,name:x.name,phone:x.phone||''}));
-    
-    console.log('✓ Datos cargados - biz:', bizProfile?.name || 'sin perfil');
-  }catch(err){console.error('loadDB error:',err);}
-}
-
-// ══ SINCRONIZACIÓN MANUAL ══
+// ── SINCRONIZAR (botón 🔄) ──
 async function refreshData(){
-  if(!currentUser){toast('Inicia sesión primero');return;}
+  if(!currentUser||currentUser.id?.includes('demo-user')){ toast('Inicia sesión primero'); return; }
   toast('🔄 Sincronizando...');
   await loadDB();
+  render();
   toast('✓ Datos actualizados');
 }
 
-// ══ AUTO-SYNC CADA 30 SEGUNDOS ══
-setInterval(()=>{
-  if(currentUser && !currentUser.id?.includes('demo-user')){
-    loadDB();
+// ── AUTH STATE ──
+sb.auth.onAuthStateChange(async(event, session)=>{
+  console.log('auth event:', event);
+  if(event==='SIGNED_IN' && session){
+    currentUser = session.user;
+    appStarted = false;
+    await startApp();
+  } else if(event==='SIGNED_OUT'){
+    currentUser = null; appStarted = false;
+    entries=[]; products=[]; clients=[];
+    showAuth();
   }
-}, 30000); // 30 segundos
+});
 
-// ══ CERRAR SESIÓN ══
-async function handleLogout() {
-  if(!confirm('¿Cerrar sesión?')) return;
-  
-  const wasDemo = currentUser?.id?.includes('demo-user');
-  
-  // Limpiar localStorage
-  try {
-    localStorage.removeItem('kajita_v4');
-    localStorage.removeItem('kajita_products');
-    localStorage.removeItem('kajita_clients');
-    localStorage.removeItem('kajita_suppliers');
-    localStorage.removeItem('kajita_biz_name');
-    localStorage.removeItem('kajita_biz_industry');
-    localStorage.removeItem('kajita_onboarded');
-  } catch(e) {}
-  
-  // Limpiar memoria
-  currentUser = null;
-  entries = [];
-  products = [];
-  clients = [];
-  
-  // Si era demo, solo recargar
-  if(wasDemo) {
-    window.location.reload();
-    return;
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', async ()=>{
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){
+    currentUser = session.user;
+    await startApp();
+  } else {
+    showAuth();
   }
-  
-  // Cerrar sesión en Supabase
-  try {
-    if(typeof sb !== 'undefined') {
-      await sb.auth.signOut();
-    }
-  } catch(e) {
-    console.error('SignOut error:', e);
-  }
-  
-  // Forzar recarga con parametro único para evitar caché
-  window.location.href = window.location.pathname + '?logout=' + Date.now();
-}
+});
 
-console.log('✓ Kajita Sync v5.0 - Funciones nativas');
+console.log('✓ Kajita v6.9');
 </script>
 </body>
 </html>
