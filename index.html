@@ -1639,7 +1639,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v7.7-FINAL3CARDS</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v7.8-WINDOW3CARDS</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -2239,7 +2239,7 @@ async function addProduct() {
     if(p){ 
       p.name=name; p.price=price; 
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && editingProductId !== null && editingProductId !== undefined) {
+      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && editingProductId !== null && editingProductId !== undefined) {
         try {
           await sb.from('products').update({name, price}).eq('id', editingProductId).eq('user_id', currentUser.id);
         } catch(e) { console.error('Error updating product:', e); }
@@ -2251,7 +2251,7 @@ async function addProduct() {
     toast('Producto actualizado');
   } else {
     let newId = Date.now();
-    if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+    if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')) {
       try {
         const {data, error} = await sb.from('products').insert([{
           user_id: currentUser.id,
@@ -2303,7 +2303,7 @@ function delProduct(id) {
       if(editingProductId===id) cancelEditProduct();
       
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
+      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
         try {
           await sb.from('products').delete().eq('id', id).eq('user_id', currentUser.id);
         } catch(e) { console.error('Error deleting product:', e); }
@@ -2325,7 +2325,7 @@ async function addClient() {
       c.name=name; 
       c.phone=phone; 
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && editingClientId !== null && editingClientId !== undefined) {
+      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && editingClientId !== null && editingClientId !== undefined) {
         try {
           await sb.from('clients').update({name, phone: phone || null}).eq('id', editingClientId).eq('user_id', currentUser.id);
         } catch(e) { console.error('Error updating client:', e); }
@@ -2338,7 +2338,7 @@ async function addClient() {
   } else {
     let newId = Date.now();
     // Crear en Supabase primero
-    if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+    if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')) {
       try {
         const {data, error} = await sb.from('clients').insert([{
           user_id: currentUser.id,
@@ -2393,7 +2393,7 @@ function delClient(id) {
       if(editingClientId===id) cancelEditClient();
       
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
+      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
         try {
           await sb.from('clients').delete().eq('id', id).eq('user_id', currentUser.id);
         } catch(e) { console.error('Error deleting client:', e); }
@@ -2863,7 +2863,7 @@ function deletePanelItem(type, id) {
     onConfirm: async () => {
       // Sync con Supabase
       const isCloudId = id !== null && id !== undefined;
-      const isLoggedIn = typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
+      const isLoggedIn = window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user');
       
       if(type==='cli')  { 
         if(isCloudId && isLoggedIn) {
@@ -2898,7 +2898,7 @@ async function savePanelClient() {
   if(!name){ document.getElementById('pfCliName').focus(); toast('Escribe el nombre'); return; }
 
   const id = _panelEditId.cli;
-  const loggedIn = typeof currentUser !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
+  const loggedIn = window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user');
 
   if(id !== null){
     const c = clients.find(x=>String(x.id)===String(id));
@@ -2948,7 +2948,7 @@ async function savePanelProduct() {
   if(!name){ document.getElementById('pfInvName').focus(); toast('Escribe el nombre'); return; }
 
   const id = _panelEditId.inv;
-  const loggedIn = typeof currentUser !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user');
+  const loggedIn = window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user');
 
   if(id !== null){
     // Editar existente
@@ -3208,7 +3208,7 @@ async function saveSettings() {
   localStorage.setItem('kajita_biz', JSON.stringify(bizProfile));
 
   // Guardar en Supabase
-  if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+  if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')) {
     try {
       await sb.from('profiles').upsert([{
         id: currentUser.id,
@@ -3287,7 +3287,7 @@ async function onbFinish() {
   localStorage.setItem('kajita_biz', JSON.stringify(bizProfile));
 
   // Guardar en Supabase si hay usuario logueado
-  if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')) {
+  if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')) {
     try {
       await sb.from('profiles').upsert([{
         id: currentUser.id,
@@ -3686,7 +3686,7 @@ async function submitEntry(){
         credit: isCredit, client,
         paid: isCredit ? entries[idx].paid : false
       };
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')){
+      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')){
         try {
           await sb.from('entries').update({
             type: cType, description: desc, amount,
@@ -3704,7 +3704,7 @@ async function submitEntry(){
     // ── CREAR NUEVO ──
     let newId = String(Date.now()); // fallback local
 
-    if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user')){
+    if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')){
       try {
         const { data, error } = await sb.from('entries').insert([{
           user_id:      currentUser.id,
@@ -3759,7 +3759,7 @@ async function cobrarEntry(id){
   e.paid=true; e.credit=false; e.pay='cash'; e.paidAt=new Date().toISOString();
   
   // Sync con Supabase
-  if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
+  if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
     try {
       await sb.from('entries').update({
         is_credit: false,
@@ -3807,7 +3807,7 @@ function delEntry(id){
       if(editId===id) cancelEdit();
       
       // Sync con Supabase
-      if(typeof sb !== 'undefined' && currentUser && !currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
+      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
         try {
           await sb.from('entries').delete().eq('id', id).eq('user_id', currentUser.id);
         } catch(err) {
@@ -4392,11 +4392,11 @@ function toast(msg){
 <!-- SUPABASE CON AUTENTICACIÓN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-var sb = window.supabase.createClient(
+var sb = window.sb = window.supabase.createClient(
   'https://xdjqawfikdlxxelabetg.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkanFhd2Zpa2RseHhlbGFiZXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDYwMTAsImV4cCI6MjA5NDUyMjAxMH0.h_-97MAKlbrCaFJQbLzQgRa9X33GgbpxuXEuqHhOGOo'
 );
-var currentUser = null;
+var currentUser = window.currentUser = null;
 
 function getToday(){
   const d=new Date();
@@ -4457,7 +4457,7 @@ function showAuthError(msg,type){
 
 // ── DEMO ──
 async function handleDemoLogin(){
-  currentUser={id:'demo-user-0000',email:'demo@kajita.app',user_metadata:{business_name:'Demo'}};
+  currentUser=window.currentUser={id:'demo-user-0000',email:'demo@kajita.app',user_metadata:{business_name:'Demo'}};
   bizProfile={name:'Demo - Prueba Kajita',rubro:'Servicios'};
   document.getElementById('authScreen').style.display='none';
   document.getElementById('app').style.display='block';
@@ -4483,7 +4483,7 @@ async function handleLogin(e){
   try{
     const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
     if(error)throw error;
-    currentUser=data.user;
+    currentUser=window.currentUser=data.user;
     await startApp();
   }catch(err){
     showAuthError(err.message.includes('Invalid')||err.message.includes('credentials')?'Email o contraseña incorrectos':'Error: '+err.message);
@@ -4514,7 +4514,7 @@ async function handleRegister(e){
     if(error)throw error;
     if(data.user){
       try{await sb.from('profiles').upsert([{id:data.user.id,business_name:biz}]);}catch(e){}
-      currentUser=data.user;
+      currentUser=window.currentUser=data.user;
       bizProfile={name:biz,rubro:''};
       await startApp();
       toast('¡Cuenta creada! Bienvenido a Kajita 🎉');
@@ -4531,7 +4531,7 @@ async function handleRegister(e){
 async function handleLogout(){
   if(!confirm('¿Cerrar sesión?'))return;
   try{localStorage.clear();}catch(e){}
-  currentUser=null;
+  currentUser=window.currentUser=null;
   entries=[];products=[];clients=[];bizProfile=null;
   try{await sb.auth.signOut();}catch(e){}
   // Recargar la página
@@ -4550,7 +4550,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   try{
     const{data:{session}}=await sb.auth.getSession();
     if(session){
-      currentUser=session.user;
+      currentUser=window.currentUser=session.user;
       await startApp();
     }else{
       document.getElementById('authScreen').style.display='flex';
