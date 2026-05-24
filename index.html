@@ -3392,6 +3392,16 @@ function setFilter(f,el) {
 function save(){ localStorage.setItem('kajita_v4', JSON.stringify(entries)); }
 function fmt(n){ return 'S/ '+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
 
+function switchAuthTab(tab){
+  const isLogin = tab==='login';
+  document.getElementById('panelLogin').style.display    = isLogin ? 'block' : 'none';
+  document.getElementById('panelRegister').style.display = isLogin ? 'none'  : 'block';
+  document.getElementById('tabLogin').classList.toggle('active',  isLogin);
+  document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+  const errEl = document.getElementById('authError');
+  if(errEl) errEl.style.display='none';
+}
+
 // Funciones de barra pendientes removidas (ahora en panel lateral de Créditos)
 function togglePendingExpanded() {}
 function renderPendingExpanded() {}
