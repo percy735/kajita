@@ -4112,12 +4112,33 @@ async function handleRegister(e){
   try{
     const{data,error}=await sb.auth.signUp({email,password:pw,options:{data:{business_name:biz}}});
     if(error)throw error;
+    
     if(data.user){
+      // Guardar perfil en Supabase
       try{await sb.from('profiles').upsert([{id:data.user.id,business_name:biz}]);}catch(e){}
-      currentUser=window.currentUser=data.user;
-      bizProfile={name:biz,rubro:''};
-      await startApp();
-      toast('¡Cuenta creada! Bienvenido a Kajita 🎉');
+      
+      // Verificar si tiene sesión activa (sin confirmación de email)
+      if(data.session){
+        currentUser=window.currentUser=data.user;
+        bizProfile={name:biz,rubro:''};
+        await startApp();
+        toast('¡Cuenta creada! Bienvenido a Kajita 🎉');
+      } else {
+        // Supabase requiere confirmar email - intentar login directo
+        const{data:loginData,error:loginErr}=await sb.auth.signInWithPassword({email,password:pw});
+        if(!loginErr && loginData.user){
+          currentUser=window.currentUser=loginData.user;
+          bizProfile={name:biz,rubro:''};
+          await startApp();
+          toast('¡Cuenta creada! Bienvenido a Kajita 🎉');
+        } else {
+          // Necesita confirmar email
+          showAuthError('¡Cuenta creada! Revisa tu email para confirmar.','success');
+          btn.disabled=false;
+          document.getElementById('registerText').style.display='inline';
+          document.getElementById('registerLoader').style.display='none';
+        }
+      }
     }
   }catch(err){
     showAuthError('Error: '+err.message);
