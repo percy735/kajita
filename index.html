@@ -4237,7 +4237,12 @@ async function cobrarEntry(id){
     try{ await sb.from('entries').update({is_credit:false,is_paid:true,payment_type:'cash'}).eq('id',id).eq('user_id',currentUser.id); }
     catch(err){ console.error('cobrar:',err); }
   }
-  save(); render(); buildDayBar(); toast('✓ Cobrado — ya suma al balance');
+  save();
+  // Reset filtro para ver el movimiento cobrado
+  const allPill=document.querySelector('.fpill[data-f="all"]');
+  setFilter('all', allPill);
+  buildDayBar(); render();
+  toast('✓ Cobrado — ya suma al balance');
 }
 
 function delEntry(id){
