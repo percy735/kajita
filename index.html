@@ -1547,6 +1547,9 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
           <span id="loginText">Entrar</span>
           <span id="loginLoader" style="display:none;">Cargando...</span>
         </button>
+        <div style="text-align:center;margin-top:12px;">
+          <button type="button" onclick="handleForgotPassword()" style="background:none;border:none;color:var(--k-text-3);font-size:12px;cursor:pointer;text-decoration:underline;">¿Olvidaste tu contraseña?</button>
+        </div>
       </form>
     </div>
     
@@ -4176,12 +4179,36 @@ async function refreshData(){
   render();
 }
 
-// ── VERIFICAR SESIÓN AL CARGAR ──
+// ── OLVIDÉ CONTRASEÑA ──
+async function handleForgotPassword(){
+  const email = document.getElementById('loginEmail').value.trim();
+  if(!email){
+    showAuthError('Escribe tu email primero');
+    document.getElementById('loginEmail').focus();
+    return;
+  }
+  try{
+    const{error}=await sb.auth.resetPasswordForEmail(email,{
+      redirectTo: window.location.href
+    });
+    if(error) throw error;
+    showAuthError('✉️ Te enviamos un link para restablecer tu contraseña. Revisa tu email.','success');
+  }catch(err){
+    showAuthError('Error: '+err.message);
+  }
+}
+
+// ── VERIFICAR SESIÓN AL CARGAR (incluyendo token de confirmación de email) ──
 window.addEventListener('DOMContentLoaded',async()=>{
   try{
+    // Supabase detecta automáticamente tokens en la URL (email confirmation, password reset)
     const{data:{session}}=await sb.auth.getSession();
     if(session){
       currentUser=window.currentUser=session.user;
+      // Limpiar token de la URL si existe
+      if(window.location.hash || window.location.search.includes('access_token')){
+        window.history.replaceState({},document.title,window.location.pathname);
+      }
       await startApp();
     }else{
       document.getElementById('authScreen').style.display='flex';
