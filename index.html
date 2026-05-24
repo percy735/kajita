@@ -1639,7 +1639,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v8.0-DEFINITIVO</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v8.1-STABLE</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -2229,53 +2229,7 @@ function switchCatTab(tab) {
   renderCatalog();
 }
 
-async function addProduct() {
-  const name  = document.getElementById('cpName').value.trim();
-  const price = parseFloat(document.getElementById('cpPrice').value);
-  if(!name)           { toast('Escribe el nombre del producto'); return; }
-  if(!price||price<=0){ toast('Ingresa un precio válido'); return; }
-  if(editingProductId !== null) {
-    const p = products.find(x=>String(x.id)===String(editingProductId));
-    if(p){ 
-      p.name=name; p.price=price; 
-      // Sync con Supabase
-      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && editingProductId !== null && editingProductId !== undefined) {
-        try {
-          await sb.from('products').update({name, price}).eq('id', editingProductId).eq('user_id', currentUser.id);
-        } catch(e) { console.error('Error updating product:', e); }
-      }
-    }
-    editingProductId = null;
-    document.getElementById('cat-add-btn-prod').textContent = '+ Agregar';
-    document.getElementById('cat-cancel-prod').style.display = 'none';
-    toast('Producto actualizado');
-  } else {
-    let newId = Date.now();
-    if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')) {
-      try {
-        const {data, error} = await sb.from('products').insert([{
-          user_id: currentUser.id,
-          name: name,
-          price: price
-        }]).select().single();
-        if(error) {
-          console.error('Error creating product:', error);
-          toast('✗ Error: ' + error.message);
-          return;
-        }
-        newId = data.id;
-      } catch(e) {
-        console.error('Error:', e);
-        toast('✗ Error al crear producto');
-        return;
-      }
-    }
-    products.unshift({ id: newId, name, price });
-    toast('Producto agregado');
-  }
-  saveProducts(); document.getElementById('cpName').value  = ''; document.getElementById('cpPrice').value = '';
-  renderCatalog(); renderProductChips();
-}
+/* addProduct defined in script 2 */
 
 function editProduct(id) {
   const p = products.find(x=>String(x.id)===String(id)); if(!p) return;
@@ -2294,78 +2248,9 @@ function cancelEditProduct() {
   document.getElementById('cat-cancel-prod').style.display = 'none'; renderCatalog();
 }
 
-function delProduct(id) {
-  const p = products.find(x=>String(x.id)===String(id)); if(!p) return;
-  showConfirm({
-    icon: '📦', title: '¿Eliminar producto?',
-    desc: `<strong>${p.name}</strong> — S/${p.price.toFixed(2)}<br>Esta acción no se puede deshacer.`,
-    onConfirm: async () => {
-      if(editingProductId===id) cancelEditProduct();
-      
-      // Sync con Supabase
-      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
-        try {
-          await sb.from('products').delete().eq('id', id).eq('user_id', currentUser.id);
-        } catch(e) { console.error('Error deleting product:', e); }
-      }
-      
-      products = products.filter(x=>String(x.id)!==String(id));
-      saveProducts(); renderCatalog(); renderProductChips(); toast('Producto eliminado');
-    }
-  });
-}
+/* delProduct defined in script 2 */
 
-async function addClient() {
-  const name  = document.getElementById('ccName').value.trim();
-  const phone = document.getElementById('ccPhone').value.trim();
-  if(!name){ toast('Escribe el nombre del cliente'); return; }
-  if(editingClientId !== null) {
-    const c = clients.find(x=>String(x.id)===String(editingClientId));
-    if(c){ 
-      c.name=name; 
-      c.phone=phone; 
-      // Sync con Supabase
-      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && editingClientId !== null && editingClientId !== undefined) {
-        try {
-          await sb.from('clients').update({name, phone: phone || null}).eq('id', editingClientId).eq('user_id', currentUser.id);
-        } catch(e) { console.error('Error updating client:', e); }
-      }
-    }
-    editingClientId = null;
-    document.getElementById('cat-add-btn-cli').textContent = '+ Agregar';
-    document.getElementById('cat-cancel-cli').style.display = 'none';
-    toast('Cliente actualizado');
-  } else {
-    let newId = Date.now();
-    // Crear en Supabase primero
-    if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')) {
-      try {
-        const {data, error} = await sb.from('clients').insert([{
-          user_id: currentUser.id,
-          name: name,
-          phone: phone || null
-        }]).select().single();
-        if(error) {
-          console.error('Error creating client:', error);
-          toast('✗ Error: ' + error.message);
-          return;
-        }
-        newId = data.id;
-      } catch(e) {
-        console.error('Error:', e);
-        toast('✗ Error al crear cliente');
-        return;
-      }
-    }
-    clients.unshift({ id: newId, name, phone });
-    toast('Cliente agregado');
-  }
-  saveClients(); 
-  document.getElementById('ccName').value  = ''; 
-  document.getElementById('ccPhone').value = '';
-  renderCatalog(); 
-  renderClientDropdown();
-}
+/* addClient defined in script 2 */
 
 function editClient(id) {
   const c = clients.find(x=>String(x.id)===String(id)); if(!c) return;
@@ -2384,26 +2269,7 @@ function cancelEditClient() {
   document.getElementById('cat-cancel-cli').style.display = 'none'; renderCatalog();
 }
 
-function delClient(id) {
-  const c = clients.find(x=>String(x.id)===String(id)); if(!c) return;
-  showConfirm({
-    icon: '👤', title: '¿Eliminar cliente?',
-    desc: `<strong>${c.name}</strong><br>Se perderá su historial en el panel. Esta acción no se puede deshacer.`,
-    onConfirm: async () => {
-      if(editingClientId===id) cancelEditClient();
-      
-      // Sync con Supabase
-      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
-        try {
-          await sb.from('clients').delete().eq('id', id).eq('user_id', currentUser.id);
-        } catch(e) { console.error('Error deleting client:', e); }
-      }
-      
-      clients = clients.filter(x=>String(x.id)!==String(id));
-      saveClients(); renderCatalog(); renderClientDropdown(); toast('Cliente eliminado');
-    }
-  });
-}
+/* delClient defined in script 2 */
 
 function addSupplier() {
   const name  = document.getElementById('cvName').value.trim();
@@ -2851,84 +2717,9 @@ function editPanelItem(type, id) {
   if(type==='inv')  { document.getElementById('pfInvName').value=item.name; document.getElementById('pfInvPrice').value=item.price||''; document.getElementById('pfInvName').focus(); }
 }
 
-function deletePanelItem(type, id) {
-  const maps = { cli: clients, prov: suppliers, inv: products };
-  const item = maps[type]?.find(x=>String(x.id)===String(id)); if(!item) return;
-  const icons = { cli:'👤', prov:'🏭', inv:'📦' };
-  const names = { cli:'cliente', prov:'proveedor', inv:'producto' };
-  showConfirm({
-    icon: icons[type],
-    title: `¿Eliminar ${names[type]}?`,
-    desc: `<strong>${item.name}</strong><br>Esta acción no se puede deshacer.`,
-    onConfirm: async () => {
-      // Sync con Supabase
-      const isCloudId = id !== null && id !== undefined;
-      const isLoggedIn = window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user');
-      
-      if(type==='cli')  { 
-        if(isCloudId && isLoggedIn) {
-          try { await sb.from('clients').delete().eq('id', id).eq('user_id', currentUser.id); } 
-          catch(e) { console.error('Error:', e); }
-        }
-        clients=clients.filter(x=>String(x.id)!==String(id));   
-        saveClients();   renderCliPanel();  renderClientDropdown(); 
-      }
-      if(type==='prov') { 
-        suppliers=suppliers.filter(x=>String(x.id)!==String(id)); 
-        saveSuppliers(); renderProvPanel(); renderSupplierDropdown(); 
-      }
-      if(type==='inv')  { 
-        if(isCloudId && isLoggedIn) {
-          try { await sb.from('products').delete().eq('id', id).eq('user_id', currentUser.id); } 
-          catch(e) { console.error('Error:', e); }
-        }
-        products=products.filter(x=>String(x.id)!==String(id));  
-        saveProducts();  renderInvPanel();  renderCatalog(); 
-      }
-      toast('Eliminado');
-    }
-  });
-}
+/* deletePanelItem defined in script 2 */
 
-async function savePanelClient() {
-  console.log('savePanelClient called, currentUser:', currentUser?.email);
-  const name  = document.getElementById('pfCliName').value.trim();
-  const phone = document.getElementById('pfCliPhone').value.trim();
-  console.log('name:', name);
-  if(!name){ document.getElementById('pfCliName').focus(); toast('Escribe el nombre'); return; }
-
-  const id = _panelEditId.cli;
-  const loggedIn = window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user');
-
-  if(id !== null){
-    const c = clients.find(x=>String(x.id)===String(id));
-    if(c){
-      c.name = name; c.phone = phone;
-      if(loggedIn){
-        try{ await sb.from('clients').update({name, phone:phone||null}).eq('id',id).eq('user_id',currentUser.id); }
-        catch(e){ console.error('update client error:',e); }
-      }
-    }
-    toast('✓ Cliente actualizado');
-  } else {
-    let newId = 'local-'+Date.now();
-    if(loggedIn){
-      try{
-        const {data,error} = await sb.from('clients').insert([{
-          user_id: currentUser.id, name, phone: phone||null
-        }]).select().single();
-        if(error){ console.error('insert client error:',error); toast('✗ '+error.message); return; }
-        newId = data.id;
-      } catch(e){ console.error('insert client catch:',e); toast('✗ Error al guardar'); return; }
-    }
-    clients.unshift({id:newId, name, phone});
-    toast('✓ Cliente agregado');
-  }
-  try{ saveClients(); } catch(e){}
-  cancelPanelForm('cli');
-  renderCliPanel();
-  try{ renderClientDropdown(); } catch(e){}
-}
+/* savePanelClient defined in script 2 */
 
 function savePanelSupplier() {
   const name=document.getElementById('pfProvName').value.trim();
@@ -2940,47 +2731,7 @@ function savePanelSupplier() {
   saveSuppliers(); cancelPanelForm('prov'); renderProvPanel(); renderSupplierDropdown();
 }
 
-async function savePanelProduct() {
-  console.log('savePanelProduct called, currentUser:', currentUser?.email);
-  const name  = document.getElementById('pfInvName').value.trim();
-  const price = parseFloat(document.getElementById('pfInvPrice').value)||0;
-  console.log('name:', name, 'price:', price);
-  if(!name){ document.getElementById('pfInvName').focus(); toast('Escribe el nombre'); return; }
-
-  const id = _panelEditId.inv;
-  const loggedIn = window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user');
-
-  if(id !== null){
-    // Editar existente
-    const p = products.find(x=>String(x.id)===String(id));
-    if(p){
-      p.name = name; p.price = price;
-      if(loggedIn){
-        try{ await sb.from('products').update({name,price}).eq('id',id).eq('user_id',currentUser.id); }
-        catch(e){ console.error('update product error:',e); }
-      }
-    }
-    toast('✓ Producto actualizado');
-  } else {
-    // Crear nuevo
-    let newId = 'local-'+Date.now();
-    if(loggedIn){
-      try{
-        const {data,error} = await sb.from('products').insert([{
-          user_id: currentUser.id, name, price
-        }]).select().single();
-        if(error){ console.error('insert product error:',error); toast('✗ '+error.message); return; }
-        newId = data.id;
-      } catch(e){ console.error('insert product catch:',e); toast('✗ Error al guardar'); return; }
-    }
-    products.unshift({id:newId, name, price});
-    toast('✓ Producto agregado');
-  }
-  try{ saveProducts(); } catch(e){}
-  cancelPanelForm('inv');
-  renderInvPanel();
-  try{ renderCatalog(); renderProductChips(); } catch(e){}
-}
+/* savePanelProduct defined in script 2 */
 
 function togglePersonCard(type, id) {
   const s=_expanded[type];
@@ -3645,134 +3396,9 @@ function fmt(n){ return 'S/ '+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 function togglePendingExpanded() {}
 function renderPendingExpanded() {}
 
-async function submitEntry(){
-  const desc     = document.getElementById('iDesc').value.trim();
-  const amount   = parseFloat(document.getElementById('iAmt').value);
-  const qty      = parseInt(document.getElementById('iQty').value)||null;
-  const unitPrice= parseFloat(document.getElementById('iUnitPrice').value)||null;
-  const credit   = document.getElementById('iCredit').checked;
-  const client   = document.getElementById('iClient').value.trim();
+/* submitEntry defined in script 2 */
 
-  // Validaciones básicas
-  if(!desc){toast('Escribe una descripción');return;}
-  if(!amount||amount<=0){toast('Ingresa un monto válido');return;}
-  if(credit&&!client){toast('Escribe el nombre del cliente');return;}
-
-  // Asegurar que activeDay esté seteado
-  if(!activeDay) {
-    const now = new Date();
-    activeDay = now.getFullYear() + '-' +
-      String(now.getMonth()+1).padStart(2,'0') + '-' +
-      String(now.getDate()).padStart(2,'0');
-  }
-  const date = activeDay;
-
-  const isIncome = cType==='income';
-  const isCredit = credit && isIncome;
-  const payment  = isCredit ? 'credit' : cPay;
-  const _now = new Date();
-  const time = String(_now.getHours()).padStart(2,'0') + ':' +
-               String(_now.getMinutes()).padStart(2,'0') + ':' +
-               String(_now.getSeconds()).padStart(2,'0');
-
-  if(editId !== null){
-    // ── EDITAR ──
-    const idx = entries.findIndex(e => String(e.id) === String(editId));
-    if(idx !== -1){
-      entries[idx] = {
-        ...entries[idx],
-        type: cType, desc, amount, qty, unitPrice,
-        pay: payment, date,
-        credit: isCredit, client,
-        paid: isCredit ? entries[idx].paid : false
-      };
-      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')){
-        try {
-          await sb.from('entries').update({
-            type: cType, description: desc, amount,
-            payment_type: payment, date,
-            is_credit: isCredit, client_name: client||null,
-            is_paid: entries[idx].paid||false
-          }).eq('id', editId).eq('user_id', currentUser.id);
-        } catch(e){ console.error('Error edit Supabase:', e); }
-      }
-    }
-    toast('✓ Movimiento actualizado');
-    cancelEdit();
-
-  } else {
-    // ── CREAR NUEVO ──
-    let newId = String(Date.now()); // fallback local
-
-    if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user')){
-      try {
-        const { data, error } = await sb.from('entries').insert([{
-          user_id:      currentUser.id,
-          type:         cType,
-          description:  desc,
-          amount:       amount,
-          payment_type: payment,
-          date:         date,
-          time:         time,
-          is_credit:    isCredit,
-          client_name:  client||null,
-          is_paid:      false
-        }]).select().single();
-
-        if(error){
-          console.error('Supabase insert error:', error);
-          toast('✗ Error: ' + (error.message||'Intenta de nuevo'));
-          return;
-        }
-        newId = data.id;
-      } catch(e){
-        console.error('submitEntry catch:', e);
-        toast('✗ Error al guardar');
-        return;
-      }
-    }
-
-    entries.unshift({
-      id: newId, type: cType, desc, amount, qty, unitPrice,
-      pay: payment, date, time,
-      credit: isCredit, client, paid: false
-    });
-
-    // Limpiar formulario
-    document.getElementById('iDesc').value      = '';
-    document.getElementById('iAmt').value       = '';
-    document.getElementById('iQty').value       = '';
-    document.getElementById('iUnitPrice').value = '';
-    document.getElementById('iClient').value    = '';
-    document.getElementById('iCredit').checked  = false;
-    onCreditToggle();
-    toast(isCredit ? '⏳ Crédito registrado' : (isIncome ? '✓ Ingreso registrado' : '✓ Egreso registrado'));
-  }
-
-  save();
-  buildDayBar();
-  render();
-}
-
-async function cobrarEntry(id){
-  const e=entries.find(x=>String(x.id)===String(id)); if(!e) return;
-  e.paid=true; e.credit=false; e.pay='cash'; e.paidAt=new Date().toISOString();
-  
-  // Sync con Supabase
-  if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
-    try {
-      await sb.from('entries').update({
-        is_credit: false,
-        is_paid: true,
-        payment_type: 'cash'
-      }).eq('id', id).eq('user_id', currentUser.id);
-    } catch(err) {
-      console.error('Error in cobrarEntry:', err);
-    }
-  }
-  
-  save(); render(); buildDayBar(); toast('✓ Cobrado — ya suma al balance');
-}
+/* cobrarEntry defined in script 2 */
 
 function editEntry(id){
   const e=entries.find(x=>String(x.id)===String(id)); if(!e) return;
@@ -3796,31 +3422,7 @@ function editEntry(id){
   },100);
 }
 
-function delEntry(id){
-  const e = entries.find(x=>String(x.id)===String(id)); if(!e) return;
-  const sign = e.credit ? '' : (e.type==='expense'?'−':'+');
-  showConfirm({
-    icon: e.type==='expense' ? '💸' : '💰',
-    title: '¿Eliminar movimiento?',
-    desc: `<strong>${e.desc}</strong><br>${sign} ${fmt(e.amount)} — Esta acción no se puede deshacer.`,
-    onConfirm: async () => {
-      if(editId===id) cancelEdit();
-      
-      // Sync con Supabase
-      if(window.sb && window.currentUser && !window.currentUser.id?.includes('demo-user') && id !== null && id !== undefined) {
-        try {
-          await sb.from('entries').delete().eq('id', id).eq('user_id', currentUser.id);
-        } catch(err) {
-          console.error('Error deleting:', err);
-        }
-      }
-      
-      entries = entries.filter(x=>String(x.id)!==String(id));
-      save(); buildDayBar(); render();
-      toast('Movimiento eliminado');
-    }
-  });
-}
+/* delEntry defined in script 2 */
 
 function cancelEdit(){
   editId=null; closeAllPickers();
@@ -4317,7 +3919,6 @@ function renderPendingBar(){
 
 function renderEntries(){
   const list=document.getElementById('entList');
-  console.log('renderEntries - activeDay:', activeDay, 'total entries:', entries.length, 'sample dates:', entries.slice(0,3).map(e=>e.date));
   let day=entries.filter(e=>e.date===activeDay);
   if(cFilter==='income')   day=day.filter(e=>e.type==='income'&&!e.credit);
   else if(cFilter==='expense')  day=day.filter(e=>e.type==='expense');
@@ -4429,7 +4030,6 @@ async function loadDB(){
       bizProfile={name:prRes.data.business_name, rubro:prRes.data.business_rubro||''};
       try{localStorage.setItem('kajita_biz',JSON.stringify(bizProfile));}catch(e){}
     }
-    console.log('loadDB done:', entries.length,'entries, activeDay:',activeDay,'dates:',entries.slice(0,3).map(e=>e.date));
   }catch(err){console.error('loadDB:',err);}
 }
 
@@ -4612,8 +4212,7 @@ async function submitEntry(){
         }]).select().single();
         if(error){ console.error('insert entry:',error); toast('✗ '+error.message); return; }
         newId = data.id;
-        console.log('✓ Entry saved to Supabase:', newId);
-      }catch(e){ console.error('insert entry catch:',e); toast('✗ Error'); return; }
+          }catch(e){ console.error('insert entry catch:',e); toast('✗ Error'); return; }
     }
     entries.unshift({id:newId,type:cType,desc,amount,qty,unitPrice,pay:payment,date:activeDay,time,credit:isCredit,client,paid:false});
     document.getElementById('iDesc').value='';
@@ -4625,6 +4224,12 @@ async function submitEntry(){
     onCreditToggle();
     toast(isCredit?'⏳ Crédito registrado':(isIncome?'✓ Ingreso registrado':'✓ Egreso registrado'));
   }
+  // Reset filter to 'all' so new entry is visible
+  cFilter='all';
+  const pills=document.querySelectorAll('.fpill');
+  pills.forEach(p=>p.classList.remove('fa'));
+  const allPill=document.querySelector('.fpill[data-f="all"]');
+  if(allPill) allPill.classList.add('fa');
   save(); buildDayBar(); render();
 }
 
