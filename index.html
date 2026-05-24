@@ -1639,7 +1639,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v8.2-VARFIX</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v8.3</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -4224,12 +4224,9 @@ async function submitEntry(){
     onCreditToggle();
     toast(isCredit?'⏳ Crédito registrado':(isIncome?'✓ Ingreso registrado':'✓ Egreso registrado'));
   }
-  // Reset filter to 'all' so new entry is visible
-  cFilter='all';
-  const pills=document.querySelectorAll('.fpill');
-  pills.forEach(p=>p.classList.remove('fa'));
-  const allPill=document.querySelector('.fpill[data-f="all"]');
-  if(allPill) allPill.classList.add('fa');
+  // Reset filter a "Todos" para que el nuevo movimiento sea visible
+  const allPill = document.querySelector('.fpill[data-f="all"]');
+  setFilter('all', allPill);
   save(); buildDayBar(); render();
 }
 
