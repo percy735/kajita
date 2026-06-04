@@ -515,8 +515,14 @@ header {
 input[type=text], input[type=number], input[type=date] {
   background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
   padding: 10px 14px; font-family: var(--sans); font-size: 14px; color: var(--k-text);
-  outline: none; transition: all 0.2s; width: 100%; -webkit-appearance: none;
+  outline: none; transition: all 0.2s; width: 100%;
 }
+/* Quitar flechitas solo de inputs numéricos */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+/* Fecha: ocultar ícono nativo del navegador */
+input[type=date]::-webkit-calendar-picker-indicator { opacity: 0; position: absolute; right: 0; width: 100%; cursor: pointer; }
 input::placeholder { color: var(--k-text-3); opacity: 0.6; }
 input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accent-l); background: rgba(0,0,0,0.4); }
 
@@ -560,8 +566,370 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
 .btn-cancel { width: 100%; margin-top: 10px; padding: 11px; background: transparent; border: 1px solid var(--k-line); border-radius: 99px; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--k-text-3); cursor: pointer; transition: all 0.2s; }
 .btn-cancel:hover { background: rgba(255,255,255,0.05); color: var(--k-text); }
 
-/* ── FILTER BAR ── */
-.filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+/* ══════════════════════════════════════
+   BOTÓN DE VOZ FAB
+══════════════════════════════════════ */
+.fab-voice {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: #1a1b1f;
+  border: 2px solid rgba(255,255,255,0.12);
+  color: var(--k-text-2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: all 0.2s ease;
+  z-index: 900;
+}
+.fab-voice:hover {
+  border-color: rgba(255,255,255,0.25);
+  transform: scale(1.05);
+}
+.fab-voice.recording {
+  background: var(--k-expense);
+  border-color: var(--k-expense);
+  color: #fff;
+  box-shadow: 0 0 0 0 rgba(255,107,107,0.6);
+  animation: voicePulse 1s infinite;
+}
+@keyframes voicePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,107,107,0.6); }
+  70%  { box-shadow: 0 0 0 14px rgba(255,107,107,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,107,107,0); }
+}
+@media (min-width: 900px) {
+  .fab-voice { bottom: 108px; right: 28px; }
+}
+@media print { .fab-voice { display: none !important; } }
+
+/* ══ MODAL DE VOZ ══ */
+.voice-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.voice-overlay.open { opacity: 1; pointer-events: all; }
+.voice-modal {
+  background: #13141a;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px 24px 0 0;
+  padding: 28px 24px 40px;
+  width: 100%; max-width: 520px;
+  transform: translateY(40px);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.voice-overlay.open .voice-modal { transform: translateY(0); }
+
+.voice-handle {
+  width: 36px; height: 4px; border-radius: 99px;
+  background: rgba(255,255,255,0.12); margin: 0 auto 24px;
+}
+
+/* Visualizador de ondas */
+.voice-waves {
+  display: flex; align-items: center; justify-content: center;
+  gap: 5px; height: 56px; margin-bottom: 16px;
+}
+.voice-wave-bar {
+  width: 4px; border-radius: 99px;
+  background: rgba(255,255,255,0.15);
+  height: 8px;
+  transition: height 0.1s ease, background 0.2s;
+}
+.voice-waves.active .voice-wave-bar {
+  background: var(--k-expense);
+  animation: waveAnim 0.6s ease-in-out infinite alternate;
+}
+.voice-waves.active .voice-wave-bar:nth-child(1) { animation-delay: 0.0s; }
+.voice-waves.active .voice-wave-bar:nth-child(2) { animation-delay: 0.08s; }
+.voice-waves.active .voice-wave-bar:nth-child(3) { animation-delay: 0.16s; }
+.voice-waves.active .voice-wave-bar:nth-child(4) { animation-delay: 0.24s; }
+.voice-waves.active .voice-wave-bar:nth-child(5) { animation-delay: 0.32s; }
+.voice-waves.active .voice-wave-bar:nth-child(6) { animation-delay: 0.40s; }
+.voice-waves.active .voice-wave-bar:nth-child(7) { animation-delay: 0.32s; }
+.voice-waves.active .voice-wave-bar:nth-child(8) { animation-delay: 0.24s; }
+.voice-waves.active .voice-wave-bar:nth-child(9) { animation-delay: 0.16s; }
+.voice-waves.active .voice-wave-bar:nth-child(10) { animation-delay: 0.08s; }
+@keyframes waveAnim {
+  from { height: 6px; }
+  to   { height: 40px; }
+}
+.voice-waves.thinking .voice-wave-bar {
+  background: var(--k-accent);
+  animation: waveThink 1.2s ease-in-out infinite alternate;
+}
+@keyframes waveThink {
+  from { height: 4px; }
+  to   { height: 28px; }
+}
+
+.voice-status {
+  text-align: center; margin-bottom: 20px;
+  font-family: var(--sans); font-size: 14px; color: var(--k-text-3);
+  min-height: 44px; line-height: 1.5;
+}
+.voice-transcript {
+  font-family: var(--serif); font-size: 18px; color: var(--k-text);
+  font-style: italic; margin-bottom: 4px;
+}
+
+/* Tarjeta de resultado interpretado */
+.voice-result {
+  display: none; margin-bottom: 20px;
+  background: rgba(196,240,66,0.06);
+  border: 1px solid rgba(196,240,66,0.2);
+  border-radius: 16px; padding: 16px 18px;
+}
+.voice-result.show { display: block; }
+.voice-result-type {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.voice-result-badge {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 99px; font-weight: 700;
+}
+.voice-result-badge.income { background: rgba(34,197,94,0.15); color: #4ade80; }
+.voice-result-badge.expense { background: rgba(255,107,107,0.15); color: var(--k-expense); }
+.voice-result-badge.credit { background: rgba(251,191,36,0.15); color: var(--k-credit); }
+.voice-result-badge.debt { background: rgba(255,107,107,0.1); color: var(--k-expense); }
+.voice-result-desc {
+  font-family: var(--sans); font-size: 18px; font-weight: 600; color: var(--k-text);
+  margin-bottom: 4px;
+}
+.voice-result-amount {
+  font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--k-accent);
+  letter-spacing: -0.5px;
+}
+.voice-result-meta {
+  font-family: var(--sans); font-size: 12px; color: var(--k-text-3); margin-top: 6px;
+}
+
+/* Botones del modal */
+.voice-btn-row { display: flex; gap: 10px; }
+.voice-btn-confirm {
+  flex: 1; padding: 14px; border-radius: 99px; border: none;
+  background: var(--k-accent); color: var(--k-bg);
+  font-family: var(--sans); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.voice-btn-confirm:hover { background: #d0ff4d; }
+.voice-btn-retry {
+  padding: 14px 20px; border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent; color: var(--k-text-3);
+  font-family: var(--sans); font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+}
+.voice-btn-retry:hover { border-color: rgba(255,255,255,0.3); color: var(--k-text); }
+.voice-btn-cancel {
+  width: 100%; padding: 14px; border-radius: 99px; border: none;
+  background: transparent; color: var(--k-text-3);
+  font-family: var(--sans); font-size: 14px;
+  cursor: pointer; margin-top: 8px;
+  transition: color 0.2s;
+}
+.voice-btn-cancel:hover { color: var(--k-text); }
+
+
+.day-note-wrap {
+  margin-top: 20px; border-top: 1px solid var(--k-line); padding-top: 16px;
+}
+.day-note-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+}
+.day-note-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--k-text-3); display: flex; align-items: center; gap: 6px;
+}
+.day-note-label svg { opacity: 0.6; }
+.day-note-saved {
+  font-family: var(--mono); font-size: 9px; color: var(--k-accent); opacity: 0;
+  transition: opacity 0.4s; pointer-events: none;
+}
+.day-note-saved.show { opacity: 1; }
+.day-note-area {
+  width: 100%; min-height: 56px; max-height: 200px;
+  background: rgba(255,255,255,0.02); border: 1px solid var(--k-line);
+  border-radius: 14px; padding: 12px 14px; resize: none; outline: none;
+  font-family: var(--sans); font-size: 13px; color: var(--k-text);
+  line-height: 1.6; transition: all 0.2s; overflow-y: auto;
+}
+.day-note-area::placeholder { color: var(--k-text-3); font-style: italic; }
+.day-note-area:focus {
+  border-color: rgba(196,240,66,0.3);
+  background: rgba(196,240,66,0.03);
+  box-shadow: 0 0 0 3px rgba(196,240,66,0.08);
+}
+
+/* ── RECORDATORIOS DE COBRO ── */
+.reminders-bar {
+  margin: 0 0 16px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(251,191,36,0.03) 100%);
+  border: 1px solid rgba(251,191,36,0.25); border-radius: 16px; overflow: hidden;
+}
+.reminders-bar-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; cursor: pointer; user-select: none;
+}
+.reminders-bar-hdr:hover { background: rgba(251,191,36,0.05); }
+.reminders-bar-title {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--k-credit);
+}
+.reminders-bar-count {
+  background: var(--k-credit); color: #000; border-radius: 99px;
+  font-family: var(--mono); font-size: 9px; font-weight: 700; padding: 2px 7px;
+}
+.reminders-bar-toggle { font-size: 11px; color: var(--k-text-3); transition: transform 0.2s; }
+.reminders-bar-toggle.open { transform: rotate(180deg); }
+.reminders-list { display: none; border-top: 1px solid rgba(251,191,36,0.15); }
+.reminders-list.open { display: block; }
+.reminder-item {
+  display: flex; flex-direction: column; gap: 0;
+  border-bottom: 1px solid rgba(251,191,36,0.08);
+}
+.reminder-item:last-child { border-bottom: none; }
+.reminder-item-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+}
+.reminder-days {
+  flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: var(--mono); font-weight: 700;
+}
+.reminder-days.urgent { background: rgba(255,107,107,0.15); color: var(--k-expense); }
+.reminder-days.warning { background: rgba(251,191,36,0.15); color: var(--k-credit); }
+.reminder-days.normal { background: rgba(255,255,255,0.05); color: var(--k-text-3); }
+.reminder-days-num { font-size: 15px; line-height: 1; }
+.reminder-days-lbl { font-size: 7px; letter-spacing: .05em; text-transform: uppercase; opacity: 0.8; }
+.reminder-info { flex: 1; min-width: 0; }
+.reminder-client { font-size: 13px; font-weight: 600; color: var(--k-text); }
+.reminder-desc { font-size: 11px; color: var(--k-text-3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reminder-amt { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--k-credit); flex-shrink: 0; }
+.reminder-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.reminder-cobrar { flex-shrink: 0; padding: 6px 12px; border-radius: 99px; border: 1px solid rgba(196,240,66,0.3); background: rgba(196,240,66,0.08); color: var(--k-accent); font-family: var(--sans); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.reminder-cobrar:hover { background: var(--k-accent); color: var(--k-bg); }
+.reminder-abonar { flex-shrink: 0; padding: 6px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: var(--k-text-3); font-family: var(--sans); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.reminder-abonar:hover { border-color: var(--k-credit); color: var(--k-credit); background: rgba(251,191,36,0.08); }
+.reminder-abonar.active { border-color: var(--k-credit); color: var(--k-credit); background: rgba(251,191,36,0.08); }
+
+/* Panel de abono inline */
+.abono-panel {
+  display: none; padding: 10px 16px 14px 68px;
+  border-top: 1px solid rgba(251,191,36,0.1);
+  background: rgba(251,191,36,0.04);
+  animation: fadeSlideDown 0.15s ease;
+}
+.abono-panel.open { display: block; }
+@keyframes fadeSlideDown {
+  from { opacity:0; transform:translateY(-6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.abono-panel-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--k-text-3); margin-bottom: 8px;
+}
+.abono-panel-row { display: flex; gap: 8px; align-items: center; }
+.abono-input {
+  flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 10px; padding: 9px 12px; color: var(--k-text); font-family: var(--mono);
+  font-size: 14px; font-weight: 600; outline: none; transition: all 0.2s;
+}
+.abono-input:focus { border-color: var(--k-credit); box-shadow: 0 0 0 3px rgba(251,191,36,0.1); }
+.abono-input::placeholder { color: var(--k-text-3); font-weight: 400; font-size: 12px; }
+.abono-btn-confirmar {
+  padding: 9px 16px; border-radius: 10px; border: none;
+  background: var(--k-credit); color: #000; font-family: var(--sans); font-size: 12px;
+  font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.abono-btn-confirmar:hover { background: #fcd34d; }
+.abono-btn-todo {
+  padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(196,240,66,0.3);
+  background: rgba(196,240,66,0.08); color: var(--k-accent); font-family: var(--sans);
+  font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.abono-btn-todo:hover { background: var(--k-accent); color: var(--k-bg); }
+
+/* ── PENDIENTES DE PAGO (deudas a proveedores) ── */
+.debts-bar {
+  margin: 0 0 16px;
+  background: linear-gradient(135deg, rgba(255,107,107,0.08) 0%, rgba(255,107,107,0.03) 100%);
+  border: 1px solid rgba(255,107,107,0.25); border-radius: 16px; overflow: hidden;
+}
+.debts-bar-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; cursor: pointer; user-select: none;
+}
+.debts-bar-hdr:hover { background: rgba(255,107,107,0.05); }
+.debts-bar-title {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--k-expense);
+}
+.debts-bar-count {
+  background: var(--k-expense); color: #fff; border-radius: 99px;
+  font-family: var(--mono); font-size: 9px; font-weight: 700; padding: 2px 7px;
+}
+.debts-bar-toggle { font-size: 11px; color: var(--k-text-3); transition: transform 0.2s; }
+.debts-bar-toggle.open { transform: rotate(180deg); }
+.debts-list { display: none; border-top: 1px solid rgba(255,107,107,0.15); }
+.debts-list.open { display: block; }
+.debt-item {
+  display: flex; flex-direction: column;
+  border-bottom: 1px solid rgba(255,107,107,0.08);
+}
+.debt-item:last-child { border-bottom: none; }
+.debt-item-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+}
+.debt-days {
+  flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: var(--mono); font-weight: 700;
+}
+.debt-days.urgent { background: rgba(255,107,107,0.2); color: var(--k-expense); }
+.debt-days.warning { background: rgba(251,191,36,0.15); color: var(--k-credit); }
+.debt-days.normal { background: rgba(255,255,255,0.05); color: var(--k-text-3); }
+.debt-days-num { font-size: 15px; line-height: 1; }
+.debt-days-lbl { font-size: 7px; letter-spacing: .05em; text-transform: uppercase; opacity: 0.8; }
+.debt-info { flex: 1; min-width: 0; }
+.debt-supplier { font-size: 13px; font-weight: 600; color: var(--k-text); }
+.debt-desc { font-size: 11px; color: var(--k-text-3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.debt-amt { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--k-expense); flex-shrink: 0; }
+.debt-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.debt-abonar { flex-shrink: 0; padding: 6px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: var(--k-text-3); font-family: var(--sans); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.debt-abonar:hover { border-color: var(--k-expense); color: var(--k-expense); background: rgba(255,107,107,0.08); }
+.debt-abonar.active { border-color: var(--k-expense); color: var(--k-expense); background: rgba(255,107,107,0.08); }
+.debt-pagar { flex-shrink: 0; padding: 6px 12px; border-radius: 99px; border: 1px solid rgba(196,240,66,0.3); background: rgba(196,240,66,0.08); color: var(--k-accent); font-family: var(--sans); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.debt-pagar:hover { background: var(--k-accent); color: var(--k-bg); }
+/* Panel abono deuda — mismo estilo que abono crédito pero rojo */
+.dabono-panel {
+  display: none; padding: 10px 16px 14px 68px;
+  border-top: 1px solid rgba(255,107,107,0.1);
+  background: rgba(255,107,107,0.04);
+  animation: fadeSlideDown 0.15s ease;
+}
+.dabono-panel.open { display: block; }
+.dabono-panel-label { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--k-text-3); margin-bottom: 8px; }
+.dabono-panel-row { display: flex; gap: 8px; align-items: center; }
+.dabono-input {
+  flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,107,107,0.3);
+  border-radius: 10px; padding: 9px 12px; color: var(--k-text); font-family: var(--mono);
+  font-size: 14px; font-weight: 600; outline: none; transition: all 0.2s;
+}
+.dabono-input:focus { border-color: var(--k-expense); box-shadow: 0 0 0 3px rgba(255,107,107,0.1); }
+.dabono-input::placeholder { color: var(--k-text-3); font-weight: 400; font-size: 12px; }
+.dabono-btn-confirmar {
+  padding: 9px 16px; border-radius: 10px; border: none;
+  background: var(--k-expense); color: #fff; font-family: var(--sans); font-size: 12px;
+  font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.dabono-btn-confirmar:hover { background: #ff4f4f; }
+
+
 .filter-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--k-text-3); margin-right: 4px; }
 .fpill { padding: 6px 14px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--k-text-3); cursor: pointer; transition: all 0.2s; }
 .fpill:hover { border-color: rgba(255,255,255,0.2); color: var(--k-text); background: rgba(255,255,255,0.05); }
@@ -592,6 +960,12 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   border-radius: 4px 16px 16px 4px;
 }
 .entry-item.pending-credit:hover { background: rgba(251, 191, 36, 0.18) !important; }
+.entry-item.pending-debt {
+  background: var(--k-expense-l) !important;
+  border-left: 3px solid var(--k-expense);
+  border-radius: 4px 16px 16px 4px;
+}
+.entry-item.pending-debt:hover { background: rgba(255, 107, 107, 0.18) !important; }
 
 @keyframes si { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
 .entry-item { animation: si 0.2s ease; }
@@ -1589,7 +1963,108 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   @page { margin: 12mm; size: A4 portrait; }
 }
 
-/* ── FORM ROW PRINCIPAL ── */
+/* ══ CALENDARIO DE VENTAS ══ */
+.sales-cal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px); z-index: 900;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.sales-cal-overlay.open { display: flex; }
+.sales-cal-modal {
+  background: var(--k-panel); border: 1px solid var(--k-line);
+  border-radius: 24px; width: 100%; max-width: 560px;
+  padding: 24px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+.sales-cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; gap: 12px;
+}
+.sales-cal-title {
+  font-family: var(--serif); font-size: 20px; font-weight: 700;
+  color: var(--k-text); text-align: center; text-transform: capitalize;
+}
+.sales-cal-subtitle {
+  font-family: var(--mono); font-size: 10px; color: var(--k-text-3);
+  text-align: center; margin-top: 2px; letter-spacing: .06em;
+}
+.sales-cal-nav {
+  background: var(--k-panel-2); border: 1px solid var(--k-line);
+  border-radius: 50%; width: 36px; height: 36px; color: var(--k-text);
+  font-size: 20px; cursor: pointer; flex-shrink: 0;
+  transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+}
+.sales-cal-nav:hover { border-color: var(--k-accent); color: var(--k-accent); }
+.sales-cal-dow {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 6px;
+}
+.sales-cal-dow span {
+  text-align: center; font-family: var(--mono); font-size: 10px;
+  color: var(--k-text-3); letter-spacing: .06em; padding: 4px 0;
+}
+.sales-cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+  margin-bottom: 20px;
+}
+.sc-day {
+  aspect-ratio: 1; border-radius: 12px; border: none;
+  background: transparent; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 2px; padding: 4px;
+  transition: all 0.15s; position: relative;
+}
+.sc-day:hover:not(.sc-other):not(.sc-future) { background: var(--k-panel-2); }
+.sc-day.sc-other { opacity: 0.2; cursor: default; }
+.sc-day.sc-future { opacity: 0.3; cursor: default; }
+.sc-day.sc-today .sc-num { color: var(--k-accent); font-weight: 700; }
+.sc-day.sc-active { background: var(--k-accent-l); border: 1px solid var(--k-accent); }
+.sc-day.sc-active .sc-num { color: var(--k-accent); }
+.sc-day.sc-has-sales { cursor: pointer; }
+.sc-num {
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  color: var(--k-text-2); line-height: 1;
+}
+.sc-today .sc-num { color: var(--k-accent) !important; }
+.sc-bar {
+  width: 80%; height: 3px; border-radius: 99px;
+  background: var(--k-accent); opacity: 0.7;
+}
+.sc-amt {
+  font-family: var(--mono); font-size: 8px; color: var(--k-text-3);
+  line-height: 1; white-space: nowrap;
+}
+.sc-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--k-credit); position: absolute; top: 4px; right: 4px;
+}
+.sc-note-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--k-blue); position: absolute; bottom: 4px; right: 4px;
+  opacity: 0.7;
+}
+.sales-cal-summary {
+  border-top: 1px solid var(--k-line); padding-top: 16px;
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+}
+.sc-sum-card {
+  background: var(--k-panel-2); border-radius: 12px; padding: 12px;
+  text-align: center;
+}
+.sc-sum-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--k-text-3); margin-bottom: 4px;
+}
+.sc-sum-value {
+  font-family: var(--serif); font-size: 18px; font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .sales-cal-modal { padding: 16px; border-radius: 20px; }
+  .sc-num { font-size: 12px; }
+  .sc-amt { display: none; }
+  .sales-cal-summary { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .sc-sum-value { font-size: 15px; }
+}
 .form-row-main {
   display: flex;
   flex-direction: column;
@@ -1598,10 +2073,37 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
 }
 .num-fields-row {
   display: grid;
-  grid-template-columns: 80px 1fr 130px;
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
-.fld-qty, .fld-unit, .fld-amt { min-width: 0; }
+.num-stepper {
+  display: flex; align-items: center;
+  background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; overflow: hidden; width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.num-stepper:focus-within {
+  border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accent-l);
+}
+.num-stepper input {
+  flex: 1; min-width: 0; border: none; background: transparent;
+  text-align: center; padding: 10px 0; font-size: 15px;
+  font-family: var(--sans); color: var(--k-text); outline: none;
+  width: 100%;
+}
+.num-stepper input:focus { box-shadow: none; }
+.step-btn {
+  width: 32px; height: 44px; flex-shrink: 0;
+  background: transparent; border: none;
+  color: var(--k-text-3); font-size: 20px; font-weight: 300;
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  padding-bottom: 2px;
+}
+.step-btn:first-child { border-right: 1px solid rgba(255,255,255,0.07); }
+.step-btn:last-child  { border-left:  1px solid rgba(255,255,255,0.07); }
+.step-btn:hover { background: rgba(196,240,66,0.1); color: var(--k-accent); }
+.step-btn:active { background: rgba(196,240,66,0.18); }
 
 
 /* ══ MOBILE BOTTOM NAV ══ */
@@ -1696,7 +2198,9 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   /* ── FORM ── */
   .form-wrap { padding: 16px 14px; border-radius: 18px; }
   .form-row-main { flex-direction: column; gap: 8px; }
-  .num-fields-row { grid-template-columns: 80px 1fr 110px; gap: 7px; }
+  .num-fields-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .step-btn { width: 28px; height: 42px; }
+  .num-stepper input { font-size:14px; padding: 10px 0; }
   .form-row { grid-template-columns: 1fr; }
   .fld label { font-size: 9px; letter-spacing: .05em; }
   .fld input  { font-size: 14px; padding: 10px; }
@@ -1776,7 +2280,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
   <div class="auth-box">
     <div class="auth-logo"><div style="font-family:'Fraunces',serif;font-size:56px;font-weight:700;letter-spacing:-2px;line-height:1;color:#fff;">Ka<span style="color:#C4F042;">j</span>ita</div></div>
     <div class="auth-subtitle">Tu caja diaria</div>
-    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.2);text-align:center;margin-top:-8px;margin-bottom:4px;">v11.9</div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.2);text-align:center;margin-top:-8px;margin-bottom:4px;">v14.8.9</div>
     
     <div class="auth-tabs">
       <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Iniciar sesión</button>
@@ -1789,13 +2293,36 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     
     <div class="auth-panel" id="panelLogin">
       <form onsubmit="handleLogin(event)">
-        <div class="auth-field">
-          <label>Email</label>
-          <input type="email" id="loginEmail" required autocomplete="email" placeholder="tu@email.com">
+
+        <!-- Toggle Email / Celular -->
+        <div class="login-method-toggle">
+          <button type="button" class="lmt-btn active" id="lmtEmail" onclick="switchLoginMethod('email')">📧 Email</button>
+          <button type="button" class="lmt-btn" id="lmtPhone" onclick="switchLoginMethod('phone')">📱 Celular</button>
         </div>
+
+        <!-- Email field -->
+        <div class="auth-field" id="fieldEmail">
+          <label>Email</label>
+          <input type="email" id="loginEmail" autocomplete="email" placeholder="tu@email.com">
+        </div>
+
+        <!-- Phone field -->
+        <div class="auth-field" id="fieldPhone" style="display:none;">
+          <label>Número de celular</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="background:var(--k-panel-2);border:1px solid var(--k-line);border-radius:10px;padding:0 12px;height:46px;display:flex;align-items:center;color:var(--k-text-3);font-size:14px;white-space:nowrap;">🇵🇪 +51</span>
+            <input type="tel" id="loginPhone" autocomplete="tel" placeholder="999 888 777" maxlength="9" style="flex:1;" oninput="this.value=this.value.replace(/\D/g,'')">
+          </div>
+        </div>
+
         <div class="auth-field">
           <label>Contraseña</label>
-          <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••">
+          <div style="position:relative;">
+            <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••" style="padding-right:44px;">
+            <button type="button" onclick="togglePw('loginPassword',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--k-text-3);padding:4px;">
+              <svg id="loginPasswordEye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
         <button type="submit" class="auth-btn" id="loginBtn">
           <span id="loginText">Entrar</span>
@@ -1813,13 +2340,43 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
           <label>Nombre de tu negocio</label>
           <input type="text" id="registerBusiness" required maxlength="100" placeholder="Ej: Bodega El Sol">
         </div>
-        <div class="auth-field">
-          <label>Email</label>
-          <input type="email" id="registerEmail" required autocomplete="email" placeholder="tu@email.com">
+
+        <!-- Toggle Email / Celular en registro -->
+        <div class="login-method-toggle">
+          <button type="button" class="lmt-btn active" id="regLmtEmail" onclick="switchRegMethod('email')">📧 Email</button>
+          <button type="button" class="lmt-btn" id="regLmtPhone" onclick="switchRegMethod('phone')">📱 Celular</button>
         </div>
+
+        <div class="auth-field" id="regFieldEmail">
+          <label>Email</label>
+          <input type="email" id="registerEmail" autocomplete="email" placeholder="tu@email.com">
+        </div>
+        <div class="auth-field" id="regFieldPhone" style="display:none;">
+          <label>Número de celular</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="background:var(--k-panel-2);border:1px solid var(--k-line);border-radius:10px;padding:0 12px;height:46px;display:flex;align-items:center;color:var(--k-text-3);font-size:14px;white-space:nowrap;">🇵🇪 +51</span>
+            <input type="tel" id="registerPhone" autocomplete="tel" placeholder="999 888 777" maxlength="9" style="flex:1;" oninput="this.value=this.value.replace(/\D/g,'')">
+          </div>
+        </div>
+
+        <!-- Email de recuperación - solo visible cuando elige celular -->
+        <div class="auth-field" id="regFieldRecovery" style="display:none;">
+          <label style="display:flex;align-items:center;gap:6px;">
+            Email de recuperación
+            <span style="font-size:10px;font-weight:400;color:var(--k-text-3);background:rgba(255,255,255,0.05);border:1px solid var(--k-line);border-radius:99px;padding:2px 8px;">opcional</span>
+          </label>
+          <input type="email" id="registerRecoveryEmail" autocomplete="email" placeholder="para recuperar tu contraseña">
+          <div style="font-size:11px;color:var(--k-text-3);margin-top:5px;">Si olvidas tu contraseña te enviaremos un link aquí.</div>
+        </div>
+
         <div class="auth-field">
           <label>Contraseña</label>
-          <input type="password" id="registerPassword" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+          <div style="position:relative;">
+            <input type="password" id="registerPassword" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres" style="padding-right:44px;">
+            <button type="button" onclick="togglePw('registerPassword',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--k-text-3);padding:4px;">
+              <svg id="registerPasswordEye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
         <button type="submit" class="auth-btn" id="registerBtn">
           <span id="registerText">Crear cuenta gratis</span>
@@ -1853,6 +2410,12 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
 .auth-field input{width:100%;padding:12px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--k-line);border-radius:10px;font-family:var(--sans);font-size:14px;color:var(--k-text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
 .auth-field input:focus{border-color:var(--k-accent);box-shadow:0 0 0 3px rgba(196,240,66,0.12);}
 .auth-field input::placeholder{color:var(--k-text-3);}
+
+/* Login method toggle */
+.login-method-toggle{display:flex;gap:6px;margin-bottom:16px;background:rgba(255,255,255,0.03);border:1px solid var(--k-line);border-radius:12px;padding:4px;}
+.lmt-btn{flex:1;padding:8px 12px;border:none;background:transparent;font-family:var(--sans);font-size:13px;font-weight:600;color:var(--k-text-3);border-radius:8px;cursor:pointer;transition:all 0.2s;}
+.lmt-btn:hover{color:var(--k-text-2);}
+.lmt-btn.active{background:var(--k-panel-2);color:var(--k-text);border:1px solid var(--k-line);}
 .auth-btn{width:100%;padding:14px;margin-top:8px;background:var(--k-accent);color:#0A0B0E;border:none;border-radius:12px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;}
 .auth-btn:hover{background:#d0ff4d;transform:translateY(-1px);}
 .auth-btn:active{transform:translateY(0);}
@@ -1885,7 +2448,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <!-- ACCIONES: lupa + tuerca + añadir + imprimir -->
     <div class="nav-actions">
       <!-- Número de versión visible -->
-      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v11.9</div>
+      <div style="position:fixed;bottom:8px;right:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);z-index:100;">v14.8.9</div>
       <button class="btn-search" id="btnSearch" onclick="toggleSearch()" title="Buscar movimiento">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -1898,7 +2461,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
         </svg>
       </button>
       <button class="btn-nav btn-export" onclick="showPDFPreview()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         <span class="btn-txt">Imprimir</span>
       </button>
       <button class="btn-nav" onclick="handleLogout()" style="background:rgba(255,107,107,0.1);border-color:var(--k-expense);color:var(--k-expense);" title="Cerrar sesión">
@@ -1955,15 +2518,19 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
       <div class="num-fields-row">
         <div class="fld fld-qty">
           <label>Cant.</label>
-          <input type="number" id="iQty" placeholder="—" min="1" step="1" style="text-align:center;" oninput="recalcAmount()">
+          <div class="num-stepper">
+            <button type="button" class="step-btn" onclick="stepField('iQty',-1)">−</button>
+            <input type="number" id="iQty" placeholder="1" min="1" step="1" oninput="recalcAmount()">
+            <button type="button" class="step-btn" onclick="stepField('iQty',1)">+</button>
+          </div>
         </div>
         <div class="fld fld-unit">
           <label>P. Unit. (S/)</label>
-          <input type="number" id="iUnitPrice" placeholder="—" min="0" step="0.01" oninput="recalcAmount()">
+          <input type="number" id="iUnitPrice" placeholder="0.00" min="0" step="0.01" oninput="recalcAmount()">
         </div>
         <div class="fld fld-amt">
           <label>Monto (S/)</label>
-          <input type="number" id="iAmt" placeholder="0.00" min="0" step="0.01">
+          <input type="number" id="iAmt" placeholder="0.00" min="0" step="0.01" oninput="recalcUnitFromAmt()">
         </div>
       </div>
     </div>
@@ -1998,7 +2565,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
           <label class="credit-pill" id="creditToggleWrap">
             <input type="checkbox" id="iCredit" onchange="onCreditToggle()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            A crédito
+            <span id="creditToggleLbl">A crédito</span>
           </label>
         </div>
       </div>
@@ -2042,7 +2609,7 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
       <div class="stat-value" id="totalBalance">S/ 0.00</div>
       <div class="balance-pending" id="balancePending" style="display:none;font-size:10px;margin-top:2px;"></div>
     </div>
-    <div class="stat-card s-exp"><div class="stat-label">Egresos</div><div class="stat-value" id="statExp">S/ 0.00</div></div>
+    <div class="stat-card s-exp"><div class="stat-label">Egresos</div><div class="stat-value" id="statExp">S/ 0.00</div><div class="balance-pending" id="statExpDebt" style="display:none;font-size:10px;margin-top:2px;color:var(--k-expense);opacity:0.8;"></div></div>
     <div class="stat-card s-cred"><div class="stat-label">Por cobrar</div><div class="stat-value" id="statCred">S/ 0.00</div></div>
   </div>
   <div class="sub-row">
@@ -2091,9 +2658,41 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     </button>
   </div>
 
+  <!-- ══ RECORDATORIOS DE COBRO ══ -->
+  <div id="remindersBar" class="reminders-bar" style="display:none;">
+    <div class="reminders-bar-hdr" onclick="toggleRemindersBar()">
+      <div class="reminders-bar-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Pendientes de cobro
+        <span class="reminders-bar-count" id="remindersCount">0</span>
+      </div>
+      <span class="reminders-bar-toggle" id="remindersToggleIcon">▼</span>
+    </div>
+    <div class="reminders-list" id="remindersList"></div>
+  </div>
+
+  <!-- ══ PENDIENTES DE PAGO (deudas a proveedores) ══ -->
+  <div id="debtsBar" class="debts-bar" style="display:none;">
+    <div class="debts-bar-hdr" onclick="toggleDebtsBar()">
+      <div class="debts-bar-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Pendientes de pago
+        <span class="debts-bar-count" id="debtsCount">0</span>
+      </div>
+      <span class="debts-bar-toggle" id="debtsToggleIcon">▼</span>
+    </div>
+    <div class="debts-list" id="debtsList"></div>
+  </div>
+
   <div class="entries-hdr">
     <div class="entries-ttl">Movimientos del día</div>
-    <div class="entries-cnt" id="entCnt"></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="openSalesCalendar()" style="background:none;border:1px solid var(--k-line);border-radius:99px;padding:5px 12px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--k-text-3);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:5px;" onmouseover="this.style.borderColor='var(--k-accent)';this.style.color='var(--k-accent)'" onmouseout="this.style.borderColor='var(--k-line)';this.style.color='var(--k-text-3)'">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendario
+      </button>
+      <div class="entries-cnt" id="entCnt"></div>
+    </div>
   </div>
   <div class="filter-bar">
     <span class="filter-lbl">Ver:</span>
@@ -2105,6 +2704,21 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <button class="fpill"      data-f="digital"  onclick="setFilter('digital',this)">Digital</button>
   </div>
   <div id="entList"></div>
+
+  <!-- ══ NOTA DEL DÍA ══ -->
+  <div class="day-note-wrap">
+    <div class="day-note-header">
+      <div class="day-note-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Nota del día
+      </div>
+      <span class="day-note-saved" id="noteSavedLbl">✓ guardado</span>
+    </div>
+    <textarea id="dayNoteArea" class="day-note-area"
+      placeholder="Feriado, faltó luz, buen día… anota lo que quieras."
+      oninput="onDayNoteInput()"
+    ></textarea>
+  </div>
 
 </div>
 
@@ -2497,9 +3111,6 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
     Clientes
   </button>
-  <button class="mbn-center" onclick="document.querySelector('.form-wrap').scrollIntoView({behavior:'smooth'})">
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#0A0B0E" stroke-width="2.8" stroke-linecap="round"><line x1="13" y1="3" x2="13" y2="23"/><line x1="3" y1="13" x2="23" y2="13"/></svg>
-  </button>
   <button class="mbn-btn" onclick="openPanel('cred')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     Créditos
@@ -2508,9 +3119,100 @@ input:focus { border-color: var(--k-accent); box-shadow: 0 0 0 3px var(--k-accen
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
     Imprimir
   </button>
+  <button class="mbn-btn" onclick="handleLogout()" style="color:rgba(239,68,68,0.7);">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Salir
+  </button>
 </nav>
 
+<!-- ══ CALENDARIO DE VENTAS ══ -->
+<div class="sales-cal-overlay" id="salesCalOverlay" onclick="if(event.target===this)closeSalesCalendar()">
+  <div class="sales-cal-modal">
+    <div class="sales-cal-header">
+      <button class="sales-cal-nav" onclick="salesCalNav(-1)">‹</button>
+      <div>
+        <div class="sales-cal-title" id="salesCalTitle"></div>
+        <div class="sales-cal-subtitle" id="salesCalSubtitle"></div>
+      </div>
+      <button class="sales-cal-nav" onclick="salesCalNav(1)">›</button>
+      <button onclick="closeSalesCalendar()" style="background:none;border:none;color:var(--k-text-3);font-size:22px;cursor:pointer;padding:4px 8px;margin-left:8px;">✕</button>
+    </div>
+    <!-- Días de semana -->
+    <div class="sales-cal-dow">
+      <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+    </div>
+    <!-- Grid de días -->
+    <div class="sales-cal-grid" id="salesCalGrid"></div>
+    <!-- Resumen del mes -->
+    <div class="sales-cal-summary" id="salesCalSummary"></div>
+  </div>
+</div>
+
 <!-- BOTÓN FLOTANTE AÑADIR -->
+<!-- ══ BOTÓN VOZ ══ -->
+<button class="fab-voice" id="fabVoice" onclick="openVoiceModal()" title="Registrar por voz">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+    <line x1="12" y1="19" x2="12" y2="23"/>
+    <line x1="8" y1="23" x2="16" y2="23"/>
+  </svg>
+</button>
+
+<!-- ══ MODAL DE VOZ ══ -->
+<div class="voice-overlay" id="voiceOverlay" onclick="if(event.target===this)closeVoiceModal()">
+  <div class="voice-modal">
+    <div class="voice-handle"></div>
+
+    <!-- Visualizador ondas -->
+    <div class="voice-waves" id="voiceWaves">
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+    </div>
+
+    <!-- Estado / transcripción -->
+    <div class="voice-status" id="voiceStatus">
+      Toca el micrófono y di algo como<br>
+      <span style="color:var(--k-text-2);font-style:italic;">"Venta cemento cincuenta soles"</span>
+    </div>
+
+    <!-- Resultado interpretado -->
+    <div class="voice-result" id="voiceResult">
+      <div class="voice-result-type">
+        <span class="voice-result-badge" id="vrBadge">ingreso</span>
+        <span id="vrExtra" style="font-size:11px;color:var(--k-text-3);"></span>
+      </div>
+      <div class="voice-result-desc" id="vrDesc">—</div>
+      <div class="voice-result-amount" id="vrAmt">S/ 0.00</div>
+      <div class="voice-result-meta" id="vrMeta"></div>
+    </div>
+
+    <!-- Botones -->
+    <div id="voiceBtnRow" style="display:none;">
+      <div class="voice-btn-row">
+        <button class="voice-btn-retry" onclick="startVoiceRecording()">🎤 Reintentar</button>
+        <button class="voice-btn-confirm" onclick="confirmVoiceEntry()">✓ Registrar</button>
+      </div>
+      <button class="voice-btn-cancel" onclick="closeVoiceModal()">Cancelar</button>
+    </div>
+
+    <div id="voiceBtnRecord" style="display:block;margin-top:4px;">
+      <button class="voice-btn-confirm" id="voiceRecordBtn" onclick="startVoiceRecording()" style="width:100%;">
+        🎤 Mantén para hablar
+      </button>
+      <button class="voice-btn-cancel" onclick="closeVoiceModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <button class="fab-btn" onclick="openCatalog()" title="Añadir cliente, producto o proveedor">
   <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#0A0B0E" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
     <line x1="11" y1="2" x2="11" y2="20"/>
@@ -2847,6 +3549,9 @@ function selectProduct(id) {
   const p = products.find(x=>String(x.id)===String(id)); if(!p) return;
   document.getElementById('iDesc').value = p.name;
   document.getElementById('iUnitPrice').value = p.price.toFixed(2);
+  // Poner cantidad en 1 por defecto si está vacía o en 0
+  const qtyEl = document.getElementById('iQty');
+  if(!qtyEl.value || qtyEl.value === '0') qtyEl.value = '1';
   productPickerOpen = false;
   _portalClose('productChips');
   document.getElementById('ftbProdIcon').classList.remove('open');
@@ -2913,6 +3618,131 @@ function renderSupplierDropdown() { if(clientPickerOpen) showClientDropdown(docu
 
 /* ── CALENDAR ── */
 let calYear = 0, calMonth = 0;
+
+/* ══ CALENDARIO DE VENTAS ══ */
+let scYear = 0, scMonth = 0;
+
+function openSalesCalendar() {
+  const now = new Date();
+  scYear  = now.getFullYear();
+  scMonth = now.getMonth();
+  renderSalesCalendar();
+  document.getElementById('salesCalOverlay').classList.add('open');
+}
+function closeSalesCalendar() {
+  document.getElementById('salesCalOverlay').classList.remove('open');
+}
+function salesCalNav(dir) {
+  scMonth += dir;
+  if(scMonth > 11){ scMonth = 0; scYear++; }
+  if(scMonth < 0) { scMonth = 11; scYear--; }
+  renderSalesCalendar();
+}
+
+function renderSalesCalendar() {
+  const now   = new Date();
+  const today = now.toISOString().split('T')[0];
+
+  // Título del mes
+  const lbl = new Date(scYear, scMonth, 1)
+    .toLocaleDateString('es-PE', {month:'long', year:'numeric'});
+  document.getElementById('salesCalTitle').textContent = lbl.charAt(0).toUpperCase() + lbl.slice(1);
+
+  // Calcular stats del mes desde entries
+  const monthStr = `${scYear}-${String(scMonth+1).padStart(2,'0')}`;
+  const monthEntries = entries.filter(e => e.date && e.date.startsWith(monthStr));
+  const monthInc  = monthEntries.filter(e=>e.type==='income'&&!e.credit).reduce((s,e)=>s+e.amount,0);
+  const monthExp  = monthEntries.filter(e=>e.type==='expense'&&!e.debt).reduce((s,e)=>s+e.amount,0);
+  const monthDays = new Set(monthEntries.map(e=>e.date)).size;
+
+  document.getElementById('salesCalSubtitle').textContent =
+    `${monthDays} día${monthDays!==1?'s':''} con movimientos`;
+
+  // Agrupar entries por día
+  const dayMap = {};
+  monthEntries.forEach(e => {
+    if(!dayMap[e.date]) dayMap[e.date] = {inc:0, exp:0, cred:0, count:0};
+    if(e.credit)           dayMap[e.date].cred += e.amount;
+    else if(e.type==='income')  dayMap[e.date].inc  += e.amount;
+    else                        dayMap[e.date].exp  += e.amount;
+    dayMap[e.date].count++;
+  });
+
+  // Máximo ingreso del mes para escalar la barra
+  const maxInc = Math.max(...Object.values(dayMap).map(d=>d.inc), 1);
+
+  // Generar grid
+  const firstDow   = (new Date(scYear, scMonth, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(scYear, scMonth+1, 0).getDate();
+  const daysInPrev  = new Date(scYear, scMonth, 0).getDate();
+
+  let html = '';
+
+  // Días del mes anterior
+  for(let i = firstDow-1; i >= 0; i--) {
+    html += `<div class="sc-day sc-other"><span class="sc-num">${daysInPrev-i}</span></div>`;
+  }
+
+  // Días del mes actual
+  for(let d = 1; d <= daysInMonth; d++) {
+    const iso    = `${scYear}-${String(scMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isFuture = iso > today;
+    const isToday  = iso === today;
+    const isActive = iso === activeDay;
+    const data     = dayMap[iso];
+
+    let cls = 'sc-day';
+    if(isFuture)  cls += ' sc-future';
+    if(isToday)   cls += ' sc-today';
+    if(isActive)  cls += ' sc-active';
+    if(data)      cls += ' sc-has-sales';
+
+    const onclick = (!isFuture) ? `onclick="closeSalesCalendar();selectDay('${iso}')"` : '';
+
+    let inner = `<span class="sc-num">${d}</span>`;
+
+    if(data && data.inc > 0) {
+      const pct = Math.max(15, Math.round((data.inc / maxInc) * 100));
+      inner += `<div class="sc-bar" style="opacity:${0.4 + pct/160};"></div>`;
+      inner += `<span class="sc-amt">S/${data.inc % 1 === 0 ? data.inc : data.inc.toFixed(0)}</span>`;
+    } else if(data && data.exp > 0 && data.inc === 0) {
+      inner += `<div class="sc-bar" style="background:var(--k-expense);opacity:0.5;"></div>`;
+    }
+
+    if(data && data.cred > 0) {
+      inner += `<div class="sc-dot"></div>`;
+    }
+    if(dayNotes[iso] && dayNotes[iso].trim()) {
+      inner += `<div class="sc-note-dot"></div>`;
+    }
+
+    html += `<div class="${cls}" ${onclick}>${inner}</div>`;
+  }
+
+  // Relleno siguiente mes
+  const total = firstDow + daysInMonth;
+  const rem   = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for(let d = 1; d <= rem; d++) {
+    html += `<div class="sc-day sc-other"><span class="sc-num">${d}</span></div>`;
+  }
+
+  document.getElementById('salesCalGrid').innerHTML = html;
+
+  // Resumen del mes
+  document.getElementById('salesCalSummary').innerHTML = `
+    <div class="sc-sum-card">
+      <div class="sc-sum-label">Ingresos</div>
+      <div class="sc-sum-value" style="color:var(--k-income);">${fmt(monthInc)}</div>
+    </div>
+    <div class="sc-sum-card">
+      <div class="sc-sum-label">Egresos</div>
+      <div class="sc-sum-value" style="color:var(--k-expense);">${fmt(monthExp)}</div>
+    </div>
+    <div class="sc-sum-card">
+      <div class="sc-sum-label">Balance</div>
+      <div class="sc-sum-value" style="color:${monthInc-monthExp>=0?'var(--k-income)':'var(--k-expense)'};">${fmt(monthInc-monthExp)}</div>
+    </div>`;
+}
 
 function openCalendar() {
   const d = new Date(activeDay + 'T12:00:00');
@@ -3064,53 +3894,115 @@ function savePanelSupplier() {
 function togglePersonCard(type, id) {
   const s=_expanded[type];
   if(s.has(id)) s.delete(id); else s.add(id);
-  if(type==='cli')  renderCliPanel();
-  if(type==='prov') renderProvPanel();
+  // Toggle directo en DOM sin re-renderizar — más rápido y sin bugs de ID
+  const list = document.getElementById(type==='cli'?'panelCliList':'panelProvList');
+  list.querySelectorAll('.person-card').forEach(card => {
+    if(card.dataset.pid === String(id)){
+      card.classList.toggle('expanded', s.has(id));
+    }
+  });
 }
 
 /* ── PANEL CLIENTES ── */
 function renderCliPanel() {
   const q=(document.getElementById('panelCliSearch').value||'').toLowerCase();
   const list=document.getElementById('panelCliList');
-  if(!clients.length){
-    list.innerHTML=`<div class="panel-empty"><p>Sin clientes aún.<br>Usa <strong>+ Agregar</strong> para añadir el primero.</p></div>`;
+
+  // Construir mapas desde entries
+  const debtMap={}, histMap={};
+  entries.filter(e=>e.credit&&e.client).forEach(e=>{ const k=e.client.toLowerCase(); if(!debtMap[k]) debtMap[k]=[]; debtMap[k].push(e); });
+  entries.filter(e=>e.type==='income'&&e.client&&!e.credit).forEach(e=>{ const k=e.client.toLowerCase(); if(!histMap[k]) histMap[k]=[]; histMap[k].push(e); });
+
+  // Unir clientes registrados + clientes que aparecen solo en entries
+  const allKeys = new Set([
+    ...clients.map(c=>c.name.toLowerCase()),
+    ...Object.keys(debtMap),
+    ...Object.keys(histMap)
+  ]);
+
+  // Construir lista unificada
+  const allClients = [...allKeys].map(key => {
+    const registered = clients.find(c=>c.name.toLowerCase()===key);
+    return {
+      id: registered ? registered.id : 'entry-'+key,
+      name: registered ? registered.name : (debtMap[key]||histMap[key]||[{}])[0].client || key,
+      phone: registered ? registered.phone : null,
+      _registered: !!registered
+    };
+  });
+
+  const filtered = allClients
+    .filter(c => !q || c.name.toLowerCase().includes(q))
+    .sort((a,b) => {
+      const da=(debtMap[a.name.toLowerCase()]||[]).reduce((s,e)=>s+(e.pendiente||e.amount),0);
+      const db=(debtMap[b.name.toLowerCase()]||[]).reduce((s,e)=>s+(e.pendiente||e.amount),0);
+      return db-da||a.name.localeCompare(b.name,'es');
+    });
+
+  if(!filtered.length){
+    list.innerHTML=`<div class="panel-empty"><p>Sin clientes aún.<br>Registra ventas con nombre de cliente<br>o usa <strong>+ Agregar</strong>.</p></div>`;
     document.getElementById('panelCliSub').textContent='0 clientes';
     document.getElementById('panelCliTotalDebt').textContent='S/ 0.00';
     document.getElementById('panelCliDebtCount').textContent='0';
     return;
   }
-  const debtMap={};
-  entries.filter(e=>e.credit&&e.client).forEach(e=>{ const k=e.client.toLowerCase(); if(!debtMap[k]) debtMap[k]=[]; debtMap[k].push(e); });
-  const histMap={};
-  entries.filter(e=>e.type==='income'&&e.client&&!e.credit).forEach(e=>{ const k=e.client.toLowerCase(); if(!histMap[k]) histMap[k]=[]; histMap[k].push(e); });
-
-  const filtered=clients.filter(c=>!q||c.name.toLowerCase().includes(q)).sort((a,b)=>{
-    const da=(debtMap[a.name.toLowerCase()]||[]).reduce((s,e)=>s+e.amount,0);
-    const db=(debtMap[b.name.toLowerCase()]||[]).reduce((s,e)=>s+e.amount,0);
-    return db-da||a.name.localeCompare(b.name,'es');
-  });
 
   let totalDebt=0, debtCount=0;
   list.innerHTML=filtered.map(c=>{
     const key=c.name.toLowerCase();
-    const debts=debtMap[key]||[];
-    const hist=histMap[key]||[];
-    const debtAmt=debts.reduce((s,e)=>s+e.amount,0);
+    const debts=(debtMap[key]||[]).sort((a,b)=>b.date.localeCompare(a.date));
+    const hist=(histMap[key]||[]).sort((a,b)=>b.date.localeCompare(a.date));
+    const debtAmt=debts.reduce((s,e)=>s+(e.pendiente||e.amount),0);
     const histAmt=hist.reduce((s,e)=>s+e.amount,0);
     totalDebt+=debtAmt; if(debtAmt>0) debtCount++;
     const isOpen=_expanded.cli.has(c.id);
     const badgeCls=debtAmt>0?'debt':(histAmt>0?'paid':'zero');
-    const badgeTxt=debtAmt>0?fmt(debtAmt)+' debe':(histAmt>0?fmt(histAmt)+' hist.':' — ');
-    const allTx=[...debts.map(e=>({...e,_pend:true})),...hist].sort((a,b)=>b.date.localeCompare(a.date)||(b.time||'').localeCompare(a.time||''));
-    const debtSummary=debtAmt>0?`<div class="debt-summary"><span class="debt-summary-lbl">Deuda total acumulada</span><span class="debt-summary-val">${fmt(debtAmt)}</span></div>`:'';
-    const rows=allTx.length?allTx.map(e=>{
-      const isPend=e._pend||e.credit;
-      const amtClr=isPend?'var(--k-credit)':' var(--k-accent)';
-      const d=new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'});
-      return `<div class="person-detail-row"><div class="pdr-left"><div class="pdr-desc">${e.desc}</div><div class="pdr-date">${d}${e.time?' · '+e.time:''}</div></div><div class="pdr-right"><div class="pdr-amt" style="color:${amtClr};">${fmt(e.amount)}</div><div class="pdr-status" style="color:${amtClr};">${isPend?'Pendiente':'Cobrado'}</div></div></div>`;
-    }).join(''): `<div style="padding:14px;font-family:var(--sans);font-size:12px;color:var(--k-text-3);text-align:center;">Sin movimientos registrados</div>`;
-    return `<div class="person-card${isOpen?' expanded':''}"><div class="person-card-head" onclick="togglePersonCard('cli','${c.id}')"><div class="person-card-info"><div class="person-card-name">${c.name}</div><div class="person-card-meta">${c.phone||'Sin teléfono'} · ${debts.length} pendiente${debts.length!==1?'s':''}</div></div><div class="person-card-right"><span class="person-badge ${badgeCls}">${badgeTxt}</span><div class="person-card-actions" onclick="event.stopPropagation()"><button class="pca-btn" onclick="editPanelItem('cli','${c.id}')" title="Editar">✎</button><button class="pca-btn del" onclick=\"deletePanelItem('cli','${c.id}')\" title="Eliminar">×</button></div><span class="person-chevron">▾</span></div></div><div class="person-detail">${debtSummary}${rows}</div></div>`;
+    const badgeTxt=debtAmt>0?fmt(debtAmt)+' debe':(histAmt>0?fmt(histAmt)+' cobrado':' — ');
+    const totalTx=debts.length+hist.length;
+
+    const debtRows=debts.length
+      ? (debts.length>0?`<div style="padding:6px 14px 2px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--k-credit);opacity:0.7;">Pendiente de cobro</div>`:'')
+        + debts.map(e=>{
+          const pend=e.pendiente>0?e.pendiente:e.amount;
+          const d=new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'});
+          const today2=new Date().toISOString().slice(0,10);
+          const days=Math.round((new Date(today2+'T12:00:00')-new Date(e.date+'T12:00:00'))/86400000);
+          return `<div class="person-detail-row" style="background:rgba(251,191,36,0.06);"><div class="pdr-left"><div class="pdr-desc">${e.desc}</div><div class="pdr-date">${d} · <span style="color:${days>=7?'var(--k-expense)':'var(--k-text-3)'};">${days===0?'hoy':days+'d'}</span>${e.acuenta>0?` · <span style="color:var(--k-accent);">S/${e.acuenta.toFixed(2)} a cuenta</span>`:''}</div></div><div class="pdr-right"><div class="pdr-amt" style="color:var(--k-credit);">${fmt(pend)}</div><div class="pdr-status" style="color:var(--k-credit);">Pendiente</div></div></div>`;
+        }).join('')
+      : '';
+
+    const histRows=hist.length
+      ? (hist.length>0&&debts.length>0?`<div style="padding:6px 14px 2px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--k-text-3);opacity:0.7;">Cobrado</div>`:'')
+        + hist.map(e=>{
+          const d=new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'});
+          return `<div class="person-detail-row"><div class="pdr-left"><div class="pdr-desc">${e.desc}</div><div class="pdr-date">${d}${e.time?' · '+e.time:''} · ${PAY_LBL[e.pay]||'Efectivo'}</div></div><div class="pdr-right"><div class="pdr-amt" style="color:var(--k-accent);">+${fmt(e.amount)}</div><div class="pdr-status" style="color:var(--k-accent);">Cobrado</div></div></div>`;
+        }).join('')
+      : '';
+
+    const emptyMsg=(!debts.length&&!hist.length)?`<div style="padding:14px;font-family:var(--sans);font-size:12px;color:var(--k-text-3);text-align:center;">Sin movimientos registrados</div>`:'';
+    const debtSummary=debtAmt>0?`<div class="debt-summary"><span class="debt-summary-lbl">Por cobrar</span><span class="debt-summary-val">${fmt(debtAmt)}</span></div>`:'';
+    const editBtn=c._registered?`<button class="pca-btn" onclick="editPanelItem('cli','${c.id}')" title="Editar">✎</button><button class="pca-btn del" onclick=\"deletePanelItem('cli','${c.id}')\" title="Eliminar">×</button>`:'';
+    const waCliBtn = debtAmt > 0
+      ? `<button class="pca-btn" onclick="shareCliWhatsapp('${c.name.replace(/'/g,'')}',${debtAmt},'${key}')" title="Enviar por WhatsApp" style="color:#25D366;">&#128241;</button>`
+      : '';
+
+    return `<div class="person-card${isOpen?' expanded':''}" data-pid="${c.id}">
+      <div class="person-card-head" onclick="togglePersonCard('cli','${c.id}')">
+        <div class="person-card-info">
+          <div class="person-card-name">${c.name}${!c._registered?` <span style="font-size:9px;opacity:0.4;font-family:var(--mono);">sin registrar</span>`:''}
+          </div>
+          <div class="person-card-meta">${c.phone||'Sin teléfono'} · ${totalTx} movimiento${totalTx!==1?'s':''}</div>
+        </div>
+        <div class="person-card-right">
+          <span class="person-badge ${badgeCls}">${badgeTxt}</span>
+          <div class="person-card-actions" onclick="event.stopPropagation()">${waCliBtn}${editBtn}</div>
+          <span class="person-chevron">▾</span>
+        </div>
+      </div>
+      <div class="person-detail">${debtSummary}${debtRows}${histRows}${emptyMsg}</div>
+    </div>`;
   }).join('');
+
   document.getElementById('panelCliSub').textContent=filtered.length+' cliente'+(filtered.length!==1?'s':'');
   document.getElementById('panelCliTotalDebt').textContent=fmt(totalDebt);
   document.getElementById('panelCliDebtCount').textContent=debtCount+'';
@@ -3120,29 +4012,111 @@ function renderCliPanel() {
 function renderProvPanel() {
   const q=(document.getElementById('panelProvSearch').value||'').toLowerCase();
   const list=document.getElementById('panelProvList');
-  if(!suppliers.length){
-    list.innerHTML=`<div class="panel-empty"><p>Sin proveedores aún.<br>Usa <strong>+ Agregar</strong> para añadir el primero.</p></div>`;
+
+  // Separar pagos reales de deudas desde entries
+  const payMap={}, debtMap={};
+  entries.filter(e=>e.type==='expense'&&e.client).forEach(e=>{
+    const k=e.client.toLowerCase();
+    if(e.debt && !e.paid){ if(!debtMap[k]) debtMap[k]=[]; debtMap[k].push(e); }
+    else { if(!payMap[k]) payMap[k]=[]; payMap[k].push(e); }
+  });
+
+  // Unir proveedores registrados + los que solo aparecen en entries
+  const allKeys = new Set([
+    ...suppliers.map(s=>s.name.toLowerCase()),
+    ...Object.keys(payMap),
+    ...Object.keys(debtMap)
+  ]);
+
+  const allSuppliers = [...allKeys].map(key => {
+    const registered = suppliers.find(s=>s.name.toLowerCase()===key);
+    const firstEntry = (debtMap[key]||payMap[key]||[{}])[0];
+    return {
+      id: registered ? registered.id : 'entry-'+key.replace(/[^a-z0-9]/g,'-'),
+      name: registered ? registered.name : (firstEntry.client || key),
+      phone: registered ? registered.phone : null,
+      _registered: !!registered,
+      _key: key
+    };
+  });
+
+  const filtered = allSuppliers
+    .filter(s => !q || s.name.toLowerCase().includes(q))
+    .sort((a,b) => {
+      const da=(debtMap[a.name.toLowerCase()]||[]).reduce((s,e)=>s+(e.pendiente||e.amount),0);
+      const db=(debtMap[b.name.toLowerCase()]||[]).reduce((s,e)=>s+(e.pendiente||e.amount),0);
+      return db-da||a.name.localeCompare(b.name,'es');
+    });
+
+  if(!filtered.length){
+    list.innerHTML=`<div class="panel-empty"><p>Sin proveedores aún.<br>Registra egresos con nombre de proveedor<br>o usa <strong>+ Agregar</strong>.</p></div>`;
     document.getElementById('panelProvSub').textContent='0 proveedores';
     document.getElementById('panelProvTotal').textContent='S/ 0.00';
     document.getElementById('panelProvCount').textContent='0';
     return;
   }
-  const payMap={};
-  entries.filter(e=>e.type==='expense'&&e.client).forEach(e=>{ const k=e.client.toLowerCase(); if(!payMap[k]) payMap[k]=[]; payMap[k].push(e); });
-  const filtered=suppliers.filter(s=>!q||s.name.toLowerCase().includes(q)).sort((a,b)=>{
-    const ta=(payMap[a.name.toLowerCase()]||[]).reduce((s,e)=>s+e.amount,0);
-    const tb=(payMap[b.name.toLowerCase()]||[]).reduce((s,e)=>s+e.amount,0);
-    return tb-ta||a.name.localeCompare(b.name,'es');
-  });
+
   let grand=0;
   list.innerHTML=filtered.map(s=>{
     const key=s.name.toLowerCase();
     const pays=(payMap[key]||[]).sort((a,b)=>b.date.localeCompare(a.date));
-    const total=pays.reduce((sum,e)=>sum+e.amount,0); grand+=total;
+    const debts=(debtMap[key]||[]).sort((a,b)=>b.date.localeCompare(a.date));
+    const totalPaid=pays.reduce((sum,e)=>sum+e.amount,0);
+    const totalDebt=debts.reduce((sum,e)=>sum+(e.pendiente||e.amount),0);
+    grand+=totalPaid;
     const isOpen=_expanded.prov.has(s.id);
-    const rows=pays.length?pays.map(e=>{ const d=new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'}); return `<div class="person-detail-row"><div class="pdr-left"><div class="pdr-desc">${e.desc}</div><div class="pdr-date">${d}${e.time?' · '+e.time:''} · ${PAY_LBL[e.pay]||'Efectivo'}</div></div><div class="pdr-right"><div class="pdr-amt" style="color:var(--k-expense);">−${fmt(e.amount)}</div></div></div>`; }).join(''): `<div style="padding:14px;font-family:var(--sans);font-size:12px;color:var(--k-text-3);text-align:center;">Sin pagos registrados</div>`;
-    return `<div class="person-card${isOpen?' expanded':''}"><div class="person-card-head" onclick="togglePersonCard('prov','${s.id}')"><div class="person-card-info"><div class="person-card-name">${s.name}</div><div class="person-card-meta">${s.phone||'Sin teléfono'} · ${pays.length} pago${pays.length!==1?'s':''}</div></div><div class="person-card-right"><span class="person-badge ${total>0?'spent':'zero'}">${total>0?fmt(total)+' pagado':'Sin pagos'}</span><div class="person-card-actions" onclick="event.stopPropagation()"><button class="pca-btn" onclick="editPanelItem('prov','${s.id}')" title="Editar">✎</button><button class="pca-btn del" onclick=\"deletePanelItem('prov','${s.id}')\" title="Eliminar">×</button></div><span class="person-chevron">▾</span></div></div><div class="person-detail">${rows}</div></div>`;
+    const metaCount=pays.length+debts.length;
+
+    const debtRows=debts.length
+      ? `<div style="padding:6px 14px 2px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--k-expense);opacity:0.7;">Por pagar</div>`
+        + debts.map(e=>{
+          const pend=e.pendiente>0?e.pendiente:e.amount;
+          const d=new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'});
+          const today2=new Date().toISOString().slice(0,10);
+          const days=Math.round((new Date(today2+'T12:00:00')-new Date(e.date+'T12:00:00'))/86400000);
+          return `<div class="person-detail-row" style="background:rgba(255,107,107,0.06);"><div class="pdr-left"><div class="pdr-desc">${e.desc}</div><div class="pdr-date">${d} · <span style="color:${days>=7?'var(--k-expense)':'var(--k-text-3)'};">${days===0?'hoy':days+'d'}</span>${e.acuenta>0?` · <span style="color:var(--k-accent);">S/${e.acuenta.toFixed(2)} abonado</span>`:''}</div></div><div class="pdr-right"><div class="pdr-amt" style="color:var(--k-expense);">−${fmt(pend)}</div><div class="pdr-status" style="color:var(--k-expense);">Por pagar</div></div></div>`;
+        }).join('')
+      : '';
+
+    const payRows=pays.length
+      ? (debts.length>0?`<div style="padding:6px 14px 2px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--k-text-3);opacity:0.7;">Pagado</div>`:'')
+        + pays.map(e=>{
+          const d=new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'});
+          return `<div class="person-detail-row"><div class="pdr-left"><div class="pdr-desc">${e.desc}</div><div class="pdr-date">${d}${e.time?' · '+e.time:''} · ${PAY_LBL[e.pay]||'Efectivo'}</div></div><div class="pdr-right"><div class="pdr-amt" style="color:var(--k-expense);">−${fmt(e.amount)}</div><div class="pdr-status" style="color:var(--k-text-3);">Pagado</div></div></div>`;
+        }).join('')
+      : '';
+
+    const emptyMsg=(!pays.length&&!debts.length)?`<div style="padding:14px;font-family:var(--sans);font-size:12px;color:var(--k-text-3);text-align:center;">Sin movimientos registrados</div>`:'';
+
+    const badge = totalDebt>0
+      ? `<span class="person-badge" style="background:rgba(255,107,107,0.15);color:var(--k-expense);">−${fmt(totalDebt)} por pagar</span>`
+      : totalPaid>0
+        ? `<span class="person-badge spent">${fmt(totalPaid)} pagado</span>`
+        : `<span class="person-badge zero">Sin movimientos</span>`;
+
+    const editBtn=s._registered
+      ? `<button class="pca-btn" onclick="editPanelItem('prov','${s.id}')" title="Editar">✎</button><button class="pca-btn del" onclick=\"deletePanelItem('prov','${s.id}')\" title="Eliminar">×</button>`
+      : '';
+    const waBtn = totalDebt > 0
+      ? `<button class="pca-btn" onclick="shareProvWhatsapp('${s.name.replace(/'/g,'')}',${totalDebt},'${s._key||s.name.toLowerCase()}')" title="Enviar por WhatsApp" style="color:#25D366;">&#128241;</button>`
+      : '';
+
+    return `<div class="person-card${isOpen?' expanded':''}" data-pid="${s.id}">
+      <div class="person-card-head" onclick="togglePersonCard('prov','${s.id}')">
+        <div class="person-card-info">
+          <div class="person-card-name">${s.name}${!s._registered?` <span style="font-size:9px;opacity:0.4;font-family:var(--mono);">sin registrar</span>`:''}</div>
+          <div class="person-card-meta">${s.phone||'Sin teléfono'} · ${metaCount} movimiento${metaCount!==1?'s':''}</div>
+        </div>
+        <div class="person-card-right">
+          ${badge}
+          <div class="person-card-actions" onclick="event.stopPropagation()">${waBtn}${editBtn}</div>
+          <span class="person-chevron">▾</span>
+        </div>
+      </div>
+      <div class="person-detail">${debtRows}${payRows}${emptyMsg}</div>
+    </div>`;
   }).join('');
+
   document.getElementById('panelProvSub').textContent=filtered.length+' proveedor'+(filtered.length!==1?'es':'');
   document.getElementById('panelProvTotal').textContent=fmt(grand);
   document.getElementById('panelProvCount').textContent=filtered.length+'';
@@ -3176,7 +4150,7 @@ function renderInvPanel() {
 function renderCredPanel() {
   const list = document.getElementById('panelCredList');
   const pending = entries.filter(e => e.credit).sort((a,b) => b.date.localeCompare(a.date));
-  const total = pending.reduce((s,e) => s+e.amount, 0);
+  const total = pending.reduce((s,e) => s+(e.pendiente||e.amount), 0);
 
   document.getElementById('panelCredTotal').textContent = fmt(total);
   document.getElementById('panelCredCount').textContent = pending.length + '';
@@ -3191,15 +4165,17 @@ function renderCredPanel() {
 
   list.innerHTML = pending.map(e => {
     const fechaLbl = new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'numeric',month:'short',year:'numeric'});
+    const montoPendiente = e.pendiente > 0 ? e.pendiente : e.amount;
+    const tieneAcuenta = e.acuenta > 0;
     return `
       <div class="cred-card">
         <div class="cred-card-left">
           <div class="cred-card-client">${e.client || 'Sin cliente'}</div>
-          <div class="cred-card-meta">${e.desc} · ${fechaLbl}</div>
+          <div class="cred-card-meta">${e.desc} · ${fechaLbl}${tieneAcuenta ? ` · <span style="color:var(--k-accent);font-weight:600;">S/${e.acuenta.toFixed(2)} a cuenta</span>` : ''}</div>
         </div>
         <div class="cred-card-right">
-          <div class="cred-card-amt">S/ ${e.amount.toFixed(2)}</div>
-          <button class="cred-cobrar-btn" onclick="cobrarEntry('${e.id}');closePanel('cred');">✓ Cobrar</button>
+          <div class="cred-card-amt">S/ ${montoPendiente.toFixed(2)}</div>
+          <button class="cred-cobrar-btn" onclick="cobrarEntry('${e.id}');closePanel('cred');">✓ Pagó</button>
         </div>
       </div>`;
   }).join('');
@@ -3671,21 +4647,24 @@ function setType(t) {
   const cf=document.getElementById('clientFieldIncome');
   const lbl=document.getElementById('clientFieldLabel');
   const iClient=document.getElementById('iClient');
+  const creditLbl=document.getElementById('creditToggleLbl');
   closeAllPickers();
   if(t==='expense'){
-    wrap.classList.add('disabled');
-    if(sep) sep.style.opacity = '0.3';
+    wrap.classList.remove('disabled');
+    if(sep) sep.style.opacity = '1';
     document.getElementById('iCredit').checked=false;
     onCreditToggle();
-    if(cf){ cf.style.display=''; } 
+    if(cf){ cf.style.display=''; }
     if(lbl) lbl.textContent='Proveedor (opcional)';
     if(iClient){ iClient.placeholder='Escribe o elige proveedor...'; iClient.value=''; }
+    if(creditLbl) creditLbl.textContent='A fiado';
   } else {
     wrap.classList.remove('disabled');
     if(sep) sep.style.opacity = '1';
     if(cf) cf.style.display='';
     if(lbl) lbl.textContent='Cliente (opcional)';
     if(iClient){ iClient.placeholder='Escribe o elige cliente...'; iClient.value=''; }
+    if(creditLbl) creditLbl.textContent='A crédito';
     showClientDropdown('');
   }
 }
@@ -3695,6 +4674,25 @@ function setPay(p) {
   const cls = {cash:'pc', yape:'py', plin:'pp', transfer:'pt', card:'pca'};
   document.querySelectorAll('.pay-btn').forEach(b=>b.className='pay-btn'+(b.dataset.pay===p?' '+cls[p]:''));
 }
+function stepField(id,delta){
+  const el=document.getElementById(id);
+  const val=parseFloat(el.value)||0;
+  const mn=parseFloat(el.min)||0;
+  const st=parseFloat(el.step)||1;
+  const dec=st<1?2:0;
+  el.value=Math.max(mn,val+delta).toFixed(dec);
+  recalcAmount();
+}
+
+// Cuando el usuario cambia el Monto, recalcula P.Unit
+function recalcUnitFromAmt(){
+  const amt = parseFloat(document.getElementById('iAmt').value)||0;
+  const qty = parseFloat(document.getElementById('iQty').value)||1;
+  if(amt > 0){
+    document.getElementById('iUnitPrice').value = (amt / qty).toFixed(2);
+  }
+}
+
 function recalcAmount() {
   const qty  = parseFloat(document.getElementById('iQty').value);
   const unit = parseFloat(document.getElementById('iUnitPrice').value);
@@ -3739,6 +4737,39 @@ function setFilter(f,el) {
 function save(){ localStorage.setItem('kajita_v4', JSON.stringify(entries)); }
 function fmt(n){ return 'S/ '+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
 
+function togglePw(id, btn){
+  const inp = document.getElementById(id);
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  btn.querySelector('svg').innerHTML = isHidden
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+}
+
+function switchLoginMethod(method){
+  const isPhone = method === 'phone';
+  document.getElementById('fieldEmail').style.display = isPhone ? 'none' : 'block';
+  document.getElementById('fieldPhone').style.display = isPhone ? 'block' : 'none';
+  document.getElementById('lmtEmail').classList.toggle('active', !isPhone);
+  document.getElementById('lmtPhone').classList.toggle('active', isPhone);
+  document.getElementById('loginEmail').required = !isPhone;
+  document.getElementById('loginPhone').required = isPhone;
+}
+
+function switchRegMethod(method){
+  const isPhone = method === 'phone';
+  document.getElementById('regFieldEmail').style.display = isPhone ? 'none' : 'block';
+  document.getElementById('regFieldPhone').style.display = isPhone ? 'block' : 'none';
+  document.getElementById('regFieldRecovery').style.display = isPhone ? 'block' : 'none';
+  document.getElementById('regLmtEmail').classList.toggle('active', !isPhone);
+  document.getElementById('regLmtPhone').classList.toggle('active', isPhone);
+  document.getElementById('registerEmail').required = !isPhone;
+  document.getElementById('registerPhone').required = isPhone;
+}
+
+// Convierte celular peruano a email interno para Supabase
+function phoneToEmail(phone){ return 'cel.' + phone.replace(/[^0-9]/g,'') + '@gmail.com'; }
+
 function switchAuthTab(tab){
   const isLogin = tab==='login';
   document.getElementById('panelLogin').style.display    = isLogin ? 'block' : 'none';
@@ -3768,6 +4799,10 @@ function editEntry(id){
   document.getElementById('iCredit').checked=!!e.credit;
   document.getElementById('iClient').value=e.client||'';
   onCreditToggle();
+  // Cargar campos a cuenta / pendiente si es crédito
+  const acEl = document.getElementById('iAcuenta');
+  if(acEl) acEl.value = (e.acuenta && e.acuenta > 0) ? e.acuenta : '';
+  calcPendiente();
   document.getElementById('formTtl').textContent='Editar movimiento';
   document.getElementById('btnReg').textContent='Guardar cambios';
   document.getElementById('btnReg').className='btn-reg editing';
@@ -3869,25 +4904,13 @@ function generateReceipt(id) {
     <div style="width:100%; box-sizing:border-box; background:#fff; color:${C.ink}; font-family:'Plus Jakarta Sans', sans-serif; font-size:13px; max-width:680px; margin:0 auto;">
 
       <!-- CABECERA -->
-      <div style="background:${C.head}; border-radius:12px 12px 0 0; padding:16px 24px; display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:14px;">
-          <div style="width:44px; height:44px; flex-shrink:0;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="44" height="44">
-              <rect x="2" y="2" width="96" height="96" rx="22" fill="#C4F042"/>
-              <circle cx="37" cy="41" r="5.5" fill="#1a1a1a"/>
-              <circle cx="63" cy="41" r="5.5" fill="#1a1a1a"/>
-              <line x1="50" y1="52" x2="50" y2="62" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
-              <path d="M35 70 Q50 82 65 70" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div>
-            <div style="display:flex; align-items:baseline; line-height:1;">
-              <span style="font-family:'Fraunces',serif; font-size:24px; font-weight:700; color:${C.headT}; letter-spacing:-0.5px;">Ka</span>
-              <span style="font-family:'Fraunces',serif; font-size:28px; font-weight:700; color:${C.accent}; letter-spacing:-1px; transform:translateY(2px); display:inline-block;">j</span>
-              <span style="font-family:'Fraunces',serif; font-size:24px; font-weight:700; color:${C.headT}; letter-spacing:-0.5px;">ita</span>
-            </div>
-            <div style="font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.18em; text-transform:uppercase; color:${C.headM}; margin-top:3px;">Sistema de caja diaria</div>
-          </div>
+      <div style="background:${C.head}; border-radius:12px 12px 0 0; padding:18px 24px; display:flex; justify-content:space-between; align-items:center;">
+        <!-- Solo wordmark, sin cajita -->
+        <div style="display:flex; align-items:baseline; line-height:1; gap:0;">
+          <span style="font-family:'Fraunces',serif; font-size:26px; font-weight:700; color:${C.headT}; letter-spacing:-0.5px;">Ka</span>
+          <span style="font-family:'Fraunces',serif; font-size:30px; font-weight:700; color:${C.accent}; letter-spacing:-1px; transform:translateY(2px); display:inline-block;">j</span>
+          <span style="font-family:'Fraunces',serif; font-size:26px; font-weight:700; color:${C.headT}; letter-spacing:-0.5px;">ita</span>
+          ${bizProfile?.name ? `<span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:${C.headM}; margin-left:12px; align-self:center; border-left:1px solid rgba(0,0,0,0.12); padding-left:12px;">${bizProfile.name}</span>` : ''}
         </div>
         <div style="text-align:right;">
           <div style="display:inline-block; background:${docColor}; color:#fff; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; padding:5px 12px; border-radius:99px; letter-spacing:.05em;">${docTitle}</div>
@@ -4003,6 +5026,111 @@ function generateReceipt(id) {
 }
 
 
+async function downloadReport(){
+  toast('⏳ Preparando PDF...');
+
+  // Generar HTML del reporte en memoria (sin mostrarlo)
+  const dayEntries = entries.filter(e=>e.date===activeDay).sort((a,b)=>(b.time||'').localeCompare(a.time||''));
+  const inc  = dayEntries.filter(e=>e.type==='income'&&!e.credit).reduce((s,e)=>s+e.amount,0);
+  const exp  = dayEntries.filter(e=>e.type==='expense'&&!e.debt).reduce((s,e)=>s+e.amount,0);
+  const cred = dayEntries.filter(e=>e.credit).reduce((s,e)=>s+e.amount,0);
+  const bal  = inc - exp;
+  const cashInc = dayEntries.filter(e=>e.type==='income'&&!e.credit&&e.pay==='cash').reduce((s,e)=>s+e.amount,0);
+  const cashExp = dayEntries.filter(e=>e.type==='expense'&&!e.debt&&e.pay==='cash').reduce((s,e)=>s+e.amount,0);
+  const DIG=['yape','plin','transfer','card'];
+  const digInc  = dayEntries.filter(e=>e.type==='income'&&!e.credit&&DIG.includes(e.pay)).reduce((s,e)=>s+e.amount,0);
+  const digExp  = dayEntries.filter(e=>e.type==='expense'&&!e.debt&&DIG.includes(e.pay)).reduce((s,e)=>s+e.amount,0);
+
+  const f = n => 'S/ '+n.toFixed(2);
+  const dateObj = new Date(activeDay+'T12:00:00');
+  const dateStr = dateObj.toLocaleDateString('es-PE',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).replace(/^\w/,c=>c.toUpperCase());
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+  const bizName = bizProfile?.name || '';
+
+  const rowsHTML = dayEntries.length ? dayEntries.map(e=>{
+    const payLabel = {cash:'Efectivo',yape:'Yape',plin:'Plin',transfer:'Transferencia',card:'Tarjeta',credit:'Crédito'}[e.pay]||e.pay;
+    const sign = e.credit ? '' : (e.type==='expense'?'−':'+');
+    const color = e.credit?'#B45309':(e.type==='expense'?'#EF4444':'#16A34A');
+    return `<tr><td style="color:#6B7280;font-size:11px;font-family:monospace;padding:10px 8px;">${e.time?.substring(0,5)||''}</td>
+      <td style="padding:10px 8px;font-weight:600;">${e.desc}${e.client?`<br><span style="font-size:11px;color:#6B7280;font-weight:400;">${e.client}</span>`:''}</td>
+      <td style="padding:10px 8px;"><span style="background:#F3F4F6;border-radius:99px;padding:3px 10px;font-size:11px;font-family:monospace;">${payLabel}</span></td>
+      <td style="padding:10px 8px;text-align:right;font-family:monospace;font-weight:700;color:${color};">${sign} ${f(e.amount)}</td></tr>`;
+  }).join('') : `<tr><td colspan="4" style="text-align:center;padding:24px;color:#9CA3AF;font-style:italic;">Sin movimientos en esta fecha.</td></tr>`;
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>Reporte Kajita ${activeDay}</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#111;}
+@page{margin:12mm;size:A4 portrait;}
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}}
+</style></head>
+<body>
+<div style="background:#F0F4F0;border-radius:10px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:#111;">Ka<span style="color:#84cc16;">j</span>ita</span>
+    ${bizName?`<span style="width:1px;height:20px;background:rgba(0,0,0,0.15);display:inline-block;"></span><span style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#374151;">${bizName}</span>`:''}
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:14px;font-weight:600;color:#111;">${dateStr}</div>
+    <div style="font-family:monospace;font-size:10px;color:#6B7280;margin-top:2px;">Impreso ${now.toLocaleDateString('es-PE')} · ${timeStr} &nbsp;·&nbsp; Cierre de caja · Reporte</div>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;">
+  ${[['Balance',f(bal),'#2563EB'],['Ingresos',f(inc),'#16A34A'],['Egresos',f(exp),'#DC2626'],['Por cobrar',f(cred),'#D97706']].map(([l,v,c])=>`
+  <div style="border:1.5px solid #E5E7EB;border-radius:10px;padding:12px;border-top:3px solid ${c};">
+    <div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#6B7280;margin-bottom:4px;">${l}</div>
+    <div style="font-size:18px;font-weight:700;color:${c};">${v}</div>
+  </div>`).join('')}
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+  ${[['Caja física / Efectivo',f(cashInc-cashExp)],['Banca móvil / Digital',f(digInc-digExp)]].map(([l,v])=>`
+  <div style="border:1px solid #E5E7EB;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:12px;color:#374151;font-weight:600;">${l}</div>
+    <div style="font-family:monospace;font-size:16px;font-weight:700;color:#111;">${v}</div>
+  </div>`).join('')}
+</div>
+<div style="font-size:13px;font-weight:700;color:#111;margin-bottom:8px;">Movimientos del día <span style="font-weight:400;color:#6B7280;font-size:12px;">${dayEntries.length} registro${dayEntries.length!==1?'s':''}</span></div>
+<table style="width:100%;border-collapse:collapse;">
+  <thead><tr style="background:#F0F4F0;">
+    <th style="padding:8px;text-align:left;font-size:10px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6B7280;font-weight:500;">Hora</th>
+    <th style="padding:8px;text-align:left;font-size:10px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6B7280;font-weight:500;">Descripción</th>
+    <th style="padding:8px;text-align:left;font-size:10px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6B7280;font-weight:500;">Método</th>
+    <th style="padding:8px;text-align:right;font-size:10px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6B7280;font-weight:500;">Monto</th>
+  </tr></thead>
+  <tbody>${rowsHTML}</tbody>
+</table>
+<div style="border-top:1px solid #E5E7EB;margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;">
+  <span style="font-size:11px;color:#6B7280;">+ ${f(inc)} ingresos &nbsp;·&nbsp; − ${f(exp)} egresos</span>
+  <span style="font-size:11px;font-weight:700;color:#111;">Neto: ${f(bal)}</span>
+</div>
+<div style="margin-top:30px;border-top:1px solid #E5E7EB;padding-top:8px;display:flex;justify-content:space-between;">
+  <span style="font-size:10px;color:#9CA3AF;">${bizName} · Kajita — Sistema de Caja Diaria</span>
+  <span style="font-size:10px;color:#9CA3AF;">${now.toLocaleDateString('es-PE')} · ${timeStr} · ${dayEntries.length} movimientos</span>
+</div>
+</body></html>`;
+
+  // Imprimir directo sin mostrar preview de Kajita
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:210mm;height:297mm;border:none;';
+  document.body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+
+  iframe.onload = () => {
+    setTimeout(()=>{
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(()=>document.body.removeChild(iframe), 2000);
+    }, 500);
+  };
+
+  toast('📄 Listo — elige "Guardar como PDF" en el diálogo');
+}
+
 function showPDFPreview() {
   const d = new Date(activeDay + 'T12:00:00');
   const dateStr = d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -4011,13 +5139,13 @@ function showPDFPreview() {
 
   const day = entries.filter(e => e.date === activeDay);
   const inc  = day.filter(e => e.type==='income' && !e.credit).reduce((s,e)=>s+e.amount, 0);
-  const exp  = day.filter(e => e.type==='expense').reduce((s,e)=>s+e.amount, 0);
+  const exp  = day.filter(e => e.type==='expense' && !e.debt).reduce((s,e)=>s+e.amount, 0);
   const cred = day.filter(e => e.credit).reduce((s,e)=>s+e.amount, 0);
   const cInc = day.filter(e => e.type==='income' && !e.credit && e.pay==='cash').reduce((s,e)=>s+e.amount,0);
-  const cExp = day.filter(e => e.type==='expense' && e.pay==='cash').reduce((s,e)=>s+e.amount,0);
+  const cExp = day.filter(e => e.type==='expense' && !e.debt && e.pay==='cash').reduce((s,e)=>s+e.amount,0);
   const DIG2 = ['yape','plin','transfer','card'];
   const dInc = day.filter(e => e.type==='income' && !e.credit && DIG2.includes(e.pay)).reduce((s,e)=>s+e.amount,0);
-  const dExp = day.filter(e => e.type==='expense' && DIG2.includes(e.pay)).reduce((s,e)=>s+e.amount,0);
+  const dExp = day.filter(e => e.type==='expense' && !e.debt && DIG2.includes(e.pay)).reduce((s,e)=>s+e.amount,0);
   const bal = inc - exp, cNet = cInc - cExp, dNet = dInc - dExp;
 
   // Colores Kajita para impresión — sin negros intensos, ahorra tinta
@@ -4027,10 +5155,11 @@ function showPDFPreview() {
                line:'#E5E7EB', muted:'#6B7280', light:'#F8FAFC',
                head:'#F0F4F0', headT:'#1F2937', headM:'#6B7280' };
 
-  // Tabla de movimientos — filas compactas
+  // Tabla de movimientos — filas compactas (sin deudas a fiado)
   const incomes  = day.filter(e => e.type==='income' && !e.credit);
-  const expenses = day.filter(e => e.type==='expense');
+  const expenses = day.filter(e => e.type==='expense' && !e.debt);
   const credits  = day.filter(e => e.credit);
+  const debts    = day.filter(e => e.debt);
 
   const rowStyle = (type) => {
     if(type==='income')  return `background:#F0FDF4;`;
@@ -4066,28 +5195,70 @@ function showPDFPreview() {
   const allRows = makeRows([...incomes, ...expenses, ...credits]);
   const emptyRow = `<tr><td colspan="5" style="padding:24px;text-align:center;color:${C.muted};font-style:italic;font-family:'Fraunces',serif;font-size:13px;">Sin movimientos en esta fecha.</td></tr>`;
 
-  // Bloque créditos pendientes (solo del día seleccionado)
-  const pending = entries.filter(e => e.credit && e.date === activeDay);
-  const pendingHtml = pending.length === 0 ? '' : `
-    <div style="margin-top:18px; border:1.5px solid #FCD34D; background:#FFFBEB; border-radius:10px; overflow:hidden; page-break-inside:avoid;">
+  // ── Sección créditos pendientes (solo del día del reporte) ──
+  const allCredits = entries.filter(e => e.credit && e.date === activeDay).sort((a,b) => a.date.localeCompare(b.date));
+  const creditsHtml = allCredits.length === 0 ? '' : `
+    <div style="margin-top:16px; border:1.5px solid #FCD34D; background:#FFFBEB; border-radius:10px; overflow:hidden; page-break-inside:avoid;">
       <div style="background:#FEF3C7; padding:8px 14px; display:flex; align-items:center; justify-content:space-between;">
         <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; color:#92400E;">⏳ Créditos pendientes de cobro</div>
-        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#92400E;">${fmt(pending.reduce((s,e)=>s+e.amount,0))} total</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#92400E;">${fmt(allCredits.reduce((s,e)=>s+(e.pendiente||e.amount),0))} total</div>
       </div>
       <table style="width:100%; border-collapse:collapse;">
         <thead><tr style="background:#FEF9C3;">
           <th style="padding:5px 10px; text-align:left; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Cliente</th>
           <th style="padding:5px 6px; text-align:left; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Descripción</th>
           <th style="padding:5px 6px; text-align:left; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Fecha</th>
-          <th style="padding:5px 10px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Monto</th>
+          <th style="padding:5px 6px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Pend.</th>
+          <th style="padding:5px 10px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Total</th>
         </tr></thead>
         <tbody>
-          ${pending.map((c,i) => `<tr style="border-top:1px solid #FDE68A; ${i%2===1?'background:#FFFEF5':''}">
-            <td style="padding:6px 10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; color:#78350F;">${c.client||'—'}</td>
-            <td style="padding:6px 6px; font-family:'Plus Jakarta Sans',sans-serif; font-size:10.5px; color:#92400E;">${c.desc}</td>
-            <td style="padding:6px 6px; font-family:'JetBrains Mono',monospace; font-size:9px; color:${C.muted}; white-space:nowrap;">${new Date(c.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'})}</td>
-            <td style="padding:6px 10px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:700; color:#92400E;">${fmt(c.amount)}</td>
-          </tr>`).join('')}
+          ${allCredits.map((c,i) => {
+            const pend = c.pendiente > 0 ? c.pendiente : c.amount;
+            const today2 = new Date().toISOString().slice(0,10);
+            const days = Math.round((new Date(today2+'T12:00:00') - new Date(c.date+'T12:00:00')) / 86400000);
+            const daysLbl = days === 0 ? 'hoy' : days === 1 ? '1 día' : days+'d';
+            return `<tr style="border-top:1px solid #FDE68A; ${i%2===1?'background:#FFFEF5':''}">
+              <td style="padding:6px 10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; color:#78350F;">${c.client||'—'}</td>
+              <td style="padding:6px 6px; font-family:'Plus Jakarta Sans',sans-serif; font-size:10.5px; color:#92400E;">${c.desc}</td>
+              <td style="padding:6px 6px; font-family:'JetBrains Mono',monospace; font-size:9px; color:${C.muted}; white-space:nowrap;">${new Date(c.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'})} <span style="color:${days>=7?C.exp:C.muted};">(${daysLbl})</span></td>
+              <td style="padding:6px 6px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:#D97706;">${fmt(pend)}</td>
+              <td style="padding:6px 10px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:10px; color:${C.muted};">${c.acuenta>0?fmt(c.amount):''}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // ── Sección deudas pendientes de pago (solo del día del reporte) ──
+  const allDebts = entries.filter(e => e.debt && e.date === activeDay).sort((a,b) => a.date.localeCompare(b.date));
+  const debtsHtml = allDebts.length === 0 ? '' : `
+    <div style="margin-top:12px; border:1.5px solid #FCA5A5; background:#FFF1F2; border-radius:10px; overflow:hidden; page-break-inside:avoid;">
+      <div style="background:#FEE2E2; padding:8px 14px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; color:#991B1B;">🧾 Deudas pendientes de pago</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#991B1B;">${fmt(allDebts.reduce((s,e)=>s+(e.pendiente||e.amount),0))} total</div>
+      </div>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead><tr style="background:#FECACA;">
+          <th style="padding:5px 10px; text-align:left; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Proveedor</th>
+          <th style="padding:5px 6px; text-align:left; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Descripción</th>
+          <th style="padding:5px 6px; text-align:left; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Fecha</th>
+          <th style="padding:5px 6px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Pend.</th>
+          <th style="padding:5px 10px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:${C.muted}; font-weight:500;">Total</th>
+        </tr></thead>
+        <tbody>
+          ${allDebts.map((d,i) => {
+            const pend = d.pendiente > 0 ? d.pendiente : d.amount;
+            const today2 = new Date().toISOString().slice(0,10);
+            const days = Math.round((new Date(today2+'T12:00:00') - new Date(d.date+'T12:00:00')) / 86400000);
+            const daysLbl = days === 0 ? 'hoy' : days === 1 ? '1 día' : days+'d';
+            return `<tr style="border-top:1px solid #FCA5A5; ${i%2===1?'background:#FFF5F5':''}">
+              <td style="padding:6px 10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; color:#991B1B;">${d.client||'—'}</td>
+              <td style="padding:6px 6px; font-family:'Plus Jakarta Sans',sans-serif; font-size:10.5px; color:#B91C1C;">${d.desc}</td>
+              <td style="padding:6px 6px; font-family:'JetBrains Mono',monospace; font-size:9px; color:${C.muted}; white-space:nowrap;">${new Date(d.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'})} <span style="color:${days>=7?C.exp:C.muted};">(${daysLbl})</span></td>
+              <td style="padding:6px 6px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:#DC2626;">${fmt(pend)}</td>
+              <td style="padding:6px 10px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:10px; color:${C.muted};">${d.acuenta>0?fmt(d.amount):''}</td>
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>`;
@@ -4129,9 +5300,9 @@ function showPDFPreview() {
             {lbl:'Ingresos',      val:fmt(inc),             color:C.inc,  bg:'#F0FDF4'},
             {lbl:'Egresos',       val:fmt(exp),             color:C.exp,  bg:'#FFF1F2'},
             {lbl:'Por cobrar',    val:fmt(cred),            color:C.cred, bg:'#FFFBEB'},
+            {lbl:'Por pagar',     val:fmt(entries.filter(e=>e.debt&&e.date===activeDay).reduce((s,e)=>s+(e.pendiente||e.amount),0)), color:'#DC2626', bg:'#FFF1F2'},
             {lbl:'Caja física',   val:(cNet<0?'−':'')+fmt(Math.abs(cNet)), color:C.cash, bg:'#FEFCE8'},
             {lbl:'Banca digital', val:(dNet<0?'−':'')+fmt(Math.abs(dNet)), color:C.dig,  bg:'#EFF6FF'},
-            {lbl:'Neto final',    val:(bal<0?'−':'')+fmt(Math.abs(bal)),   color:bal>=0?C.inc:C.exp, bg:bal>=0?'#F0FDF4':'#FFF1F2'},
           ].map(m=>`
             <div style="border:1px solid ${C.line};border-radius:8px;padding:9px 11px;background:${m.bg};">
               <div style="font-family:'JetBrains Mono',monospace;font-size:7.5px;letter-spacing:.09em;text-transform:uppercase;color:${C.muted};margin-bottom:4px;">${m.lbl}</div>
@@ -4175,7 +5346,8 @@ function showPDFPreview() {
         </tfoot>` : ''}
       </table>
 
-      ${pendingHtml}
+      ${creditsHtml}
+      ${debtsHtml}
 
       <!-- ▌PIE DE PÁGINA ▌ -->
       <div style="margin-top:20px;padding-top:10px;border-top:1px solid ${C.line};display:flex;justify-content:space-between;align-items:center;">
@@ -4200,7 +5372,7 @@ function showPDFPreview() {
   }, 400);
 }
 
-function render(){ renderHeader(); renderStats(); renderEntries(); renderPendingBar(); }
+function render(){ renderHeader(); renderStats(); renderEntries(); renderPendingBar(); renderReminders(); renderDebts(); renderDayNote(); }
 
 function renderHeader(){
   if(!activeDay) return;
@@ -4243,13 +5415,14 @@ function renderHeader(){
 function renderStats(){
   const day=entries.filter(e=>e.date===activeDay);
   const inc =day.filter(e=>e.type==='income'&&!e.credit).reduce((s,e)=>s+e.amount,0);
-  const exp =day.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+  const exp =day.filter(e=>e.type==='expense'&&!e.debt).reduce((s,e)=>s+e.amount,0);
   const cred=day.filter(e=>e.credit).reduce((s,e)=>s+(e.pendiente||e.amount),0);
+  const debt=day.filter(e=>e.debt).reduce((s,e)=>s+(e.pendiente||e.amount),0);
   const cInc=day.filter(e=>e.type==='income'&&!e.credit&&e.pay==='cash').reduce((s,e)=>s+e.amount,0);
-  const cExp=day.filter(e=>e.type==='expense'&&e.pay==='cash').reduce((s,e)=>s+e.amount,0);
+  const cExp=day.filter(e=>e.type==='expense'&&!e.debt&&e.pay==='cash').reduce((s,e)=>s+e.amount,0);
   const DIG=['yape','plin','transfer','card'];
   const dInc=day.filter(e=>e.type==='income'&&!e.credit&&DIG.includes(e.pay)).reduce((s,e)=>s+e.amount,0);
-  const dExp=day.filter(e=>e.type==='expense'&&DIG.includes(e.pay)).reduce((s,e)=>s+e.amount,0);
+  const dExp=day.filter(e=>e.type==='expense'&&!e.debt&&DIG.includes(e.pay)).reduce((s,e)=>s+e.amount,0);
   const bal=inc-exp, cNet=cInc-cExp, dNet=dInc-dExp;
 
   // Actualizar solo elementos que existen
@@ -4259,6 +5432,13 @@ function renderStats(){
   set('statCred', fmt(cred));
   set('cashNet', (cNet<0?'−':'')+fmt(Math.abs(cNet)));
   set('digNet',  (dNet<0?'−':'')+fmt(Math.abs(dNet)));
+
+  // Mostrar deuda pendiente bajo stat de Egresos
+  const debtEl = document.getElementById('statExpDebt');
+  if(debtEl){
+    if(debt>0){ debtEl.style.display='block'; debtEl.textContent='+ '+fmt(debt)+' por pagar'; }
+    else { debtEl.style.display='none'; }
+  }
 
   const balEl = document.getElementById('totalBalance');
   if(balEl){
@@ -4299,22 +5479,30 @@ function renderEntries(){
   day.forEach(e=>{if(!groups[e.date])groups[e.date]=[];groups[e.date].push(e);});
   list.innerHTML=Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(date=>{
     const dInc=groups[date].filter(e=>e.type==='income'&&!e.credit).reduce((s,e)=>s+e.amount,0);
-    const dExp=groups[date].filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+    const dExp=groups[date].filter(e=>e.type==='expense'&&!e.debt).reduce((s,e)=>s+e.amount,0);
     const dn=dInc-dExp;
     const nc=dn>=0?'var(--k-accent)':'var(--k-expense)';
     const ns=(dn>=0?'+':'−')+fmt(Math.abs(dn));
     const rows=groups[date].map(e=>{
       const isCredit=e.credit;
-      const dotClass=isCredit?'credit':e.type;
-      const amtClass=isCredit?'credit':e.type;
-      const itemClass=isCredit?'pending-credit':'';
+      const isDebt=e.debt;
+      const dotClass=isCredit?'credit':isDebt?'expense':e.type;
+      const amtClass=isCredit?'credit':isDebt?'expense':e.type;
+      const itemClass=isCredit?'pending-credit':isDebt?'pending-debt':'';
       const payBadge=isCredit
         ? `<span class="pbadge credit">⏳ Crédito${e.client?' · '+e.client:''}</span>${e.pendiente>0?`<span class="pbadge" style="background:rgba(251,191,36,0.1);color:var(--k-credit);font-family:var(--mono);">S/${e.pendiente.toFixed(2)} pendiente</span>`:''}${e.acuenta>0?`<span class="pbadge" style="background:rgba(196,240,66,0.08);color:var(--k-accent);font-family:var(--mono);">S/${e.acuenta.toFixed(2)} a cuenta</span>`:''}`
+        : isDebt
+        ? `<span class="pbadge" style="background:rgba(255,107,107,0.12);color:var(--k-expense);">🧾 A fiado${e.client?' · '+e.client:''}</span>${e.pendiente>0?`<span class="pbadge" style="background:rgba(255,107,107,0.08);color:var(--k-expense);font-family:var(--mono);">S/${e.pendiente.toFixed(2)} por pagar</span>`:''}${e.acuenta>0?`<span class="pbadge" style="background:rgba(196,240,66,0.08);color:var(--k-accent);font-family:var(--mono);">S/${e.acuenta.toFixed(2)} abonado</span>`:''}`
         : `<span class="pbadge ${e.pay||'cash'}">${PAY_LBL[e.pay]||'Efectivo'}</span>`;
       const cobrarBtn=isCredit
-        ? `<button class="abtn cobrar" onclick="cobrarEntry('${e.id}')" title="Marcar como cobrado">✓ Cobrar</button>`
+        ? `<button class="abtn cobrar" onclick="cobrarEntry('${e.id}')" title="Marcar como cobrado">✓ Pagó</button>`
+        : isDebt ? `<button class="abtn" style="border-color:var(--k-expense);color:var(--k-expense);" onclick="pagarDebt('${e.id}')" title="Marcar como pagado">✓ Pagué</button>`
         : '';
-      const amtStr=isCredit ? fmt(e.amount) : (e.type==='expense'?'−':'+')+ fmt(e.amount);
+      const amtStr=isCredit
+        ? fmt(e.pendiente > 0 ? e.pendiente : e.amount)
+        : isDebt
+        ? '−'+fmt(e.pendiente > 0 ? e.pendiente : e.amount)
+        : (e.type==='expense'?'−':'+')+ fmt(e.amount);
       return `
         <div class="entry-item ${itemClass}" data-eid="${e.id}">
           <span class="edot ${dotClass}"></span>
@@ -4331,7 +5519,7 @@ function renderEntries(){
           <div class="eactions">
             <button class="abtn-menu" onclick="toggleEntryMenu(event,'${e.id}')" title="Acciones">···</button>
             <div class="entry-popover" id="emenu-${e.id}">
-              ${isCredit ? `<button class="ep-item ep-cobrar" onclick="closeAllMenus();cobrarEntry('${e.id}')"><span class="ep-ic">✓</span>Cobrar</button>` : ''}
+              ${isCredit ? `<button class="ep-item ep-cobrar" onclick="closeAllMenus();cobrarEntry('${e.id}')"><span class="ep-ic">✓</span>Pagó</button>` : ''}
               <button class="ep-item" onclick="closeAllMenus();generateReceipt('${e.id}')"><span class="ep-ic">🧾</span>Generar recibo</button>
               <button class="ep-item" onclick="closeAllMenus();editEntry('${e.id}')"><span class="ep-ic">✎</span>Editar</button>
               <button class="ep-item ep-del" onclick="closeAllMenus();delEntry('${e.id}')"><span class="ep-ic">×</span>Eliminar</button>
@@ -4350,6 +5538,716 @@ function toast(msg){
 }
 
 // init() ahora se llama después de la autenticación
+
+/* ══════════════════════════════════════
+   MODO ANOTACIÓN RÁPIDA POR VOZ
+══════════════════════════════════════ */
+var voiceRecognition = null;
+var voiceParsed = null;  // resultado interpretado por Claude
+
+function openVoiceModal(){
+  document.getElementById('voiceOverlay').classList.add('open');
+  resetVoiceModal();
+}
+
+function closeVoiceModal(){
+  document.getElementById('voiceOverlay').classList.remove('open');
+  if(voiceRecognition){ try{ voiceRecognition.stop(); }catch(e){} }
+  document.getElementById('fabVoice').classList.remove('recording');
+  voiceParsed = null;
+}
+
+function resetVoiceModal(){
+  voiceParsed = null;
+  document.getElementById('voiceWaves').className = 'voice-waves';
+  document.getElementById('voiceStatus').innerHTML = 'Toca el micrófono y di algo como<br><span style="color:var(--k-text-2);font-style:italic;">"Venta cemento cincuenta soles"</span>';
+  document.getElementById('voiceResult').classList.remove('show');
+  document.getElementById('voiceBtnRow').style.display = 'none';
+  document.getElementById('voiceBtnRecord').style.display = 'block';
+  document.getElementById('voiceRecordBtn').textContent = '🎤 Toca para hablar';
+  document.getElementById('voiceRecordBtn').disabled = false;
+}
+
+function startVoiceRecording(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    document.getElementById('voiceStatus').innerHTML = '⚠️ Tu navegador no soporta reconocimiento de voz.<br><span style="font-size:12px;">Prueba con Chrome en Android o PC.</span>';
+    return;
+  }
+
+  voiceRecognition = new SpeechRecognition();
+  voiceRecognition.lang = 'es-PE';
+  voiceRecognition.continuous = false;
+  voiceRecognition.interimResults = true;
+  voiceRecognition.maxAlternatives = 1;
+
+  // UI → grabando
+  document.getElementById('voiceWaves').className = 'voice-waves active';
+  document.getElementById('voiceStatus').innerHTML = '<span style="color:var(--k-expense);font-weight:600;">● Escuchando…</span><br><span style="font-size:12px;color:var(--k-text-3);">Habla claramente</span>';
+  document.getElementById('voiceResult').classList.remove('show');
+  document.getElementById('voiceBtnRow').style.display = 'none';
+  document.getElementById('voiceBtnRecord').style.display = 'none';
+  document.getElementById('fabVoice').classList.add('recording');
+
+  voiceRecognition.onresult = (event) => {
+    const transcript = Array.from(event.results)
+      .map(r => r[0].transcript).join('');
+    document.getElementById('voiceStatus').innerHTML =
+      `<span class="voice-transcript">"${transcript}"</span>`;
+    if(event.results[0].isFinal){
+      processVoiceTranscript(transcript);
+    }
+  };
+
+  voiceRecognition.onerror = (e) => {
+    document.getElementById('fabVoice').classList.remove('recording');
+    document.getElementById('voiceWaves').className = 'voice-waves';
+    const msgs = {
+      'not-allowed': '⚠️ Permiso de micrófono denegado.<br><span style="font-size:12px;">Permite el acceso en tu navegador.</span>',
+      'no-speech':   '🔇 No escuché nada.<br><span style="font-size:12px;">Inténtalo de nuevo.</span>',
+      'network':     '⚠️ Error de red. Revisa tu conexión.',
+    };
+    document.getElementById('voiceStatus').innerHTML = msgs[e.error] || '⚠️ Error: '+e.error;
+    document.getElementById('voiceBtnRecord').style.display = 'block';
+    document.getElementById('voiceRecordBtn').textContent = '🎤 Reintentar';
+  };
+
+  voiceRecognition.onend = () => {
+    document.getElementById('fabVoice').classList.remove('recording');
+  };
+
+  voiceRecognition.start();
+}
+
+async function processVoiceTranscript(text){
+  document.getElementById('voiceWaves').className = 'voice-waves thinking';
+  document.getElementById('voiceStatus').innerHTML =
+    '<span style="color:var(--k-accent);">✦ Interpretando…</span>';
+
+  // Llamar via Edge Function de Supabase — sin CORS en iOS
+  let parsed = null;
+  try{
+    const session = await sb.auth.getSession();
+    const jwt = session?.data?.session?.access_token;
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 7000);
+
+    const res = await fetch(
+      'https://xdjqawfikdlxxelabetg.supabase.co/functions/v1/voice-parse',
+      {
+        method: 'POST',
+        signal: ctrl.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt || 'anon'}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkanFhd2Zpa2RseHhlbGFiZXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDYwMTAsImV4cCI6MjA5NDUyMjAxMH0.h_-97MAKlbrCaFJQbLzQgRa9X33GgbpxuXEuqHhOGOo'
+        },
+        body: JSON.stringify({ text })
+      }
+    );
+    clearTimeout(timeout);
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.amount) parsed = data;
+    }
+  } catch(err){
+    console.log('Edge function no disponible, usando parser local:', err.message);
+  }
+
+  // Parser local como fallback — funciona offline
+  if(!parsed || !parsed.amount){
+    parsed = parseVoiceLocal(text);
+  }
+
+  if(!parsed || !parsed.amount || parsed.amount <= 0){
+    document.getElementById('voiceWaves').className = 'voice-waves';
+    document.getElementById('voiceStatus').innerHTML =
+      '⚠️ No detecté un monto.<br><span style="font-size:12px;">Di algo como: <em>"venta arroz cincuenta"</em></span>';
+    document.getElementById('voiceBtnRecord').style.display = 'block';
+    document.getElementById('voiceRecordBtn').textContent = '🎤 Reintentar';
+    return;
+  }
+
+  voiceParsed = parsed;
+  showVoiceResult(parsed, text);
+}
+
+/* ── PARSER LOCAL DE VOZ ── funciona sin internet ── */
+function parseVoiceLocal(text){
+  const t = text.toLowerCase().trim();
+
+  // ── MONTO ── palabras numéricas peruanas comunes
+  const numWords = {
+    'un':1,'uno':1,'una':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,
+    'seis':6,'siete':7,'ocho':8,'nueve':9,'diez':10,'once':11,
+    'doce':12,'trece':13,'catorce':14,'quince':15,'dieciséis':16,
+    'diecisiete':17,'dieciocho':18,'diecinueve':19,'veinte':20,
+    'veintiuno':21,'veintidós':22,'veintitrés':23,'veinticuatro':24,
+    'veinticinco':25,'veintiséis':26,'veintisiete':27,'veintiocho':28,
+    'veintinueve':29,'treinta':30,'cuarenta':40,'cincuenta':50,
+    'sesenta':60,'setenta':70,'ochenta':80,'noventa':90,
+    'cien':100,'ciento':100,'ciento':100,'doscientos':200,'doscientas':200,
+    'trescientos':300,'trescientas':300,'cuatrocientos':400,'cuatrocientas':400,
+    'quinientos':500,'quinientas':500,'seiscientos':600,'setecientos':700,
+    'ochocientos':800,'novecientos':900,'mil':1000,'medio':0.5,'media':0.5
+  };
+
+  // Extraer número: buscar dígitos primero, luego palabras
+  let amount = 0;
+  const digitMatch = t.match(/\b(\d+(?:[.,]\d{1,2})?)\b/);
+  if(digitMatch){
+    amount = parseFloat(digitMatch[1].replace(',','.'));
+  } else {
+    // Buscar palabras numéricas — sumar compuestos como "treinta y cinco"
+    let remaining = t;
+    let total = 0;
+    let lastNum = 0;
+    const words = t.split(/\s+/);
+    for(let i=0; i<words.length; i++){
+      const w = words[i];
+      if(numWords[w] !== undefined){
+        const n = numWords[w];
+        if(w === 'mil'){
+          total += (lastNum || 1) * 1000;
+          lastNum = 0;
+        } else if(n >= 100){
+          total += n;
+          lastNum = 0;
+        } else {
+          lastNum += n;
+        }
+      } else if(w === 'y' && lastNum > 0){
+        // "treinta y cinco" → acumular
+      } else if(lastNum > 0){
+        total += lastNum;
+        lastNum = 0;
+      }
+    }
+    total += lastNum;
+    amount = total;
+  }
+
+  // ── TIPO ──
+  const incomeWords = ['venta','vendí','vendi','vendio','vendió','cobré','cobré','cobrei','cobro','ingreso','recibí','recibi','me pagó','me pago','me dió','me dio'];
+  const expenseWords = ['gasto','compré','compre','compro','pagué','pague','pago','egreso','gasté','gaste','salida'];
+  const creditWords = ['fiado','crédito','credito','me debe','al fío','al fio','fiar','fíe','fie'];
+  const debtWords = ['debo','debo a','proveed','proveedor','a fiado compra'];
+  const yapeWords = ['yape','yapé'];
+  const plinWords = ['plin'];
+  const transferWords = ['transfer','transferencia','banco'];
+  const cardWords = ['tarjeta','card','visa','mastercard'];
+
+  const isIncome = incomeWords.some(w => t.includes(w));
+  const isExpense = expenseWords.some(w => t.includes(w));
+  const isCredit = creditWords.some(w => t.includes(w)) && !isExpense;
+  const isDebt   = debtWords.some(w => t.includes(w)) && isExpense;
+
+  let pay = 'cash';
+  if(yapeWords.some(w => t.includes(w)))    pay = 'yape';
+  if(plinWords.some(w => t.includes(w)))    pay = 'plin';
+  if(transferWords.some(w => t.includes(w))) pay = 'transfer';
+  if(cardWords.some(w => t.includes(w)))    pay = 'card';
+
+  // ── DESCRIPCIÓN ── quitar verbo, monto y palabras de pago
+  const stopWords = new Set([
+    'venta','venta','vendí','vendi','vendio','vendió','cobré','cobrei','cobro','cobré',
+    'gasto','compré','compre','compro','pagué','pague','egreso','gasté','gaste',
+    'ingreso','recibí','recibi','me','pagó','pago','dió','dio','de','al','por',
+    'soles','sol','nuevo','nuevos','s/','un','una','el','la','los','las','y',
+    'en','con','a','fiado','crédito','credito','yape','yapé','plin','transfer',
+    'transferencia','tarjeta','banco','visa','efectivo','cash',
+    ...Object.keys(numWords), 'mil','medio','media'
+  ]);
+
+  const words2 = t.split(/\s+/).filter(w => {
+    if(stopWords.has(w)) return false;
+    if(/^\d+([.,]\d+)?$/.test(w)) return false;
+    return w.length > 1;
+  });
+  const desc = words2.slice(0,4).join(' ') || (isExpense ? 'gasto' : 'venta');
+
+  // ── CLIENTE ── buscar nombre propio después de "a", "de", "para"
+  let client = null;
+  const clientMatch = t.match(/(?:cobré a|venta a|a|para|de|me debe|debo a)\s+([a-záéíóúñü][a-záéíóúñü]+(?:\s+[a-záéíóúñü][a-záéíóúñü]+)?)/i);
+  if(clientMatch){
+    const cand = clientMatch[1].trim();
+    // Excluir palabras comunes
+    if(!stopWords.has(cand.toLowerCase()) && !/^\d+$/.test(cand)){
+      client = cand.charAt(0).toUpperCase() + cand.slice(1);
+    }
+  }
+
+  const type = isExpense ? 'expense' : 'income';
+  const summary = `${type==='income'?'Ingreso':'Egreso'} · ${desc} · S/ ${amount.toFixed(2)}${client?' · '+client:''}`;
+
+  return {
+    type, desc, amount, credit: isCredit, debt: isDebt,
+    client, pay, confidence: amount>0 ? 0.75 : 0.2,
+    human_summary: summary, _local: true
+  };
+}
+
+
+function showVoiceResult(p, transcript){
+  document.getElementById('voiceWaves').className = 'voice-waves';
+
+  // Mostrar resumen de lo que escuchó
+  document.getElementById('voiceStatus').innerHTML =
+    `<span style="font-size:12px;color:var(--k-text-3);">"${transcript}"</span>`;
+
+  // Badge de tipo
+  const badge = document.getElementById('vrBadge');
+  const isDebt = p.debt;
+  const isCredit = p.credit && p.type === 'income';
+  const typeKey = isDebt ? 'debt' : isCredit ? 'credit' : p.type;
+  const badgeLabels = { income:'Ingreso', expense:'Egreso', credit:'Crédito (te deben)', debt:'A fiado (debes tú)' };
+  badge.textContent = badgeLabels[typeKey] || p.type;
+  badge.className = 'voice-result-badge ' + typeKey;
+
+  document.getElementById('vrExtra').textContent = p.client ? `· ${p.client}` : '';
+  document.getElementById('vrDesc').textContent = p.desc || '—';
+  document.getElementById('vrAmt').textContent = `S/ ${Number(p.amount||0).toFixed(2)}`;
+  document.getElementById('vrMeta').textContent = p.human_summary || '';
+
+  // Mostrar tarjeta
+  document.getElementById('voiceResult').classList.add('show');
+  document.getElementById('voiceBtnRow').style.display = 'block';
+  document.getElementById('voiceBtnRecord').style.display = 'none';
+
+  // Baja confianza → advertir
+  if(p.confidence < 0.6){
+    document.getElementById('vrMeta').innerHTML =
+      `<span style="color:var(--k-credit);">⚠️ ${p.human_summary || 'No estoy seguro — revisa antes de registrar'}</span>`;
+  }
+}
+
+async function confirmVoiceEntry(){
+  if(!voiceParsed) return;
+  const p = voiceParsed;
+
+  if(!p.amount || p.amount <= 0){
+    toast('⚠️ No se pudo detectar el monto');
+    return;
+  }
+
+  if(!activeDay){
+    const n = new Date();
+    activeDay = n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+  }
+
+  const now  = new Date();
+  const time = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+
+  const isCredit = !!p.credit && p.type === 'income';
+  const isDebt   = !!p.debt;
+  const payment  = (isCredit || isDebt) ? 'credit' : (p.pay || 'cash');
+  const client   = p.client || '';
+
+  let newId = 'local-'+Date.now();
+  if(currentUser && !currentUser.id?.includes('demo-user')){
+    try{
+      const {data, error} = await sb.from('entries').insert([{
+        user_id: currentUser.id,
+        type: p.type,
+        description: p.desc,
+        amount: p.amount,
+        payment_type: payment,
+        date: activeDay, time,
+        is_credit: isCredit,
+        is_debt: isDebt,
+        client_name: client || null,
+        is_paid: false
+      }]).select().single();
+      if(error){ console.error(error); toast('✗ Error al guardar'); return; }
+      newId = data.id;
+    }catch(e){ console.error(e); }
+  }
+
+  entries.unshift({
+    id:newId, type:p.type, desc:p.desc, amount:p.amount,
+    qty:null, unitPrice:null, pay:payment,
+    date:activeDay, time, credit:isCredit, debt:isDebt,
+    client, paid:false, acuenta:0, pendiente:0
+  });
+
+  save(); buildDayBar(); render();
+  closeVoiceModal();
+
+  const emoji = isDebt ? '🧾' : isCredit ? '⏳' : p.type==='income' ? '✓' : '✓';
+  const typeStr = isDebt ? 'Deuda' : isCredit ? 'Crédito' : p.type==='income' ? 'Ingreso' : 'Egreso';
+  toast(`${emoji} ${typeStr} registrado — S/ ${p.amount.toFixed(2)}`);
+}
+
+var dayNotes = {}; // { 'YYYY-MM-DD': 'texto' }
+var noteTimer = null;
+
+function loadDayNoteLocal(){
+  try { dayNotes = JSON.parse(localStorage.getItem('kajita_day_notes')||'{}'); } catch(e){ dayNotes={}; }
+}
+function saveDayNoteLocal(){
+  try { localStorage.setItem('kajita_day_notes', JSON.stringify(dayNotes)); } catch(e){}
+}
+
+function renderDayNote(){
+  const area = document.getElementById('dayNoteArea');
+  if(!area || !activeDay) return;
+  area.value = dayNotes[activeDay] || '';
+}
+
+function onDayNoteInput(){
+  const area = document.getElementById('dayNoteArea');
+  const saved = document.getElementById('noteSavedLbl');
+  if(!area || !activeDay) return;
+  dayNotes[activeDay] = area.value;
+  // Guardar en Supabase con debounce 1.5s
+  clearTimeout(noteTimer);
+  if(saved) saved.classList.remove('show');
+  noteTimer = setTimeout(async () => {
+    saveDayNoteLocal();
+    await saveDayNoteRemote(activeDay, area.value);
+    if(saved){ saved.classList.add('show'); setTimeout(()=>saved.classList.remove('show'),2000); }
+  }, 1500);
+}
+
+async function saveDayNoteRemote(date, text){
+  if(!currentUser || currentUser.id?.includes('demo-user')) return;
+  try {
+    // Usamos la tabla profiles para notas: columna day_notes jsonb
+    // Si no existe, guardamos en localStorage solamente por ahora
+    // (se puede crear tabla separada si es necesario)
+    await sb.from('day_notes').upsert({
+      user_id: currentUser.id,
+      date: date,
+      note: text
+    }, { onConflict: 'user_id,date' });
+  } catch(e){ /* silencioso — guardado local ya hecho */ }
+}
+
+async function loadDayNotesRemote(){
+  if(!currentUser || currentUser.id?.includes('demo-user')) return;
+  try {
+    const {data} = await sb.from('day_notes')
+      .select('date,note')
+      .eq('user_id', currentUser.id);
+    if(data) data.forEach(r => { dayNotes[r.date] = r.note; });
+  } catch(e){ /* tabla puede no existir aún */ }
+}
+
+/* ══════════════════════════════════════
+   RECORDATORIOS DE COBRO
+══════════════════════════════════════ */
+function renderReminders(){
+  const bar = document.getElementById('remindersBar');
+  const list = document.getElementById('remindersList');
+  const countEl = document.getElementById('remindersCount');
+  if(!bar || !list) return;
+
+  // Créditos pendientes (no pagados) de todos los días
+  const today = getToday();
+  const pending = entries.filter(e => e.credit && !e.paid);
+
+  if(pending.length === 0){ bar.style.display='none'; return; }
+  bar.style.display = 'block';
+  if(countEl) countEl.textContent = pending.length;
+
+  // Ordenar por más antiguo primero
+  pending.sort((a,b) => a.date.localeCompare(b.date));
+
+  list.innerHTML = pending.map(e => {
+    const diffMs = new Date(today+'T12:00:00') - new Date(e.date+'T12:00:00');
+    const days = Math.round(diffMs / 86400000);
+    const cls = days >= 7 ? 'urgent' : days >= 3 ? 'warning' : 'normal';
+    const clientName = e.client || 'Sin nombre';
+    const fechaStr = new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'numeric',month:'short'});
+    const montoPendiente = (e.pendiente > 0 ? e.pendiente : e.amount);
+    const acuentaTag = e.acuenta > 0
+      ? `<span style="color:var(--k-accent);font-weight:600;"> · S/${e.acuenta.toFixed(2)} a cuenta</span>`
+      : '';
+    return `<div class="reminder-item" id="ritem-${e.id}">
+      <div class="reminder-item-row">
+        <div class="reminder-days ${cls}">
+          <span class="reminder-days-num">${days === 0 ? '!' : days}</span>
+          <span class="reminder-days-lbl">${days===0?'hoy':days===1?'día':'días'}</span>
+        </div>
+        <div class="reminder-info">
+          <div class="reminder-client">${clientName}</div>
+          <div class="reminder-desc">${e.desc} · ${fechaStr}${acuentaTag}</div>
+        </div>
+        <div class="reminder-amt">S/ ${montoPendiente.toFixed(2)}</div>
+        <div class="reminder-actions">
+          <button class="reminder-abonar" id="rbtn-${e.id}" onclick="toggleAbonoPanel('${e.id}', ${montoPendiente})">+ Abonar</button>
+          <button class="reminder-cobrar" onclick="cobrarEntry('${e.id}');renderReminders();">✓ Pagó</button>
+        </div>
+      </div>
+      <div class="abono-panel" id="abono-${e.id}">
+        <div class="abono-panel-label">¿Cuánto abonó ${clientName}?</div>
+        <div class="abono-panel-row">
+          <input class="abono-input" id="abono-inp-${e.id}" type="number" min="0.01" step="0.01"
+            max="${montoPendiente}" placeholder="S/ 0.00"
+            onkeydown="if(event.key==='Enter') confirmarAbono('${e.id}', ${montoPendiente})">
+          <button class="abono-btn-confirmar" onclick="confirmarAbono('${e.id}', ${montoPendiente})">Confirmar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════
+   PENDIENTES DE PAGO (deudas a proveedores)
+══════════════════════════════════════ */
+function renderDebts(){
+  const bar = document.getElementById('debtsBar');
+  const list = document.getElementById('debtsList');
+  const countEl = document.getElementById('debtsCount');
+  if(!bar || !list) return;
+
+  const today = getToday();
+  const pending = entries.filter(e => e.debt && !e.paid);
+
+  if(pending.length === 0){ bar.style.display='none'; return; }
+  bar.style.display = 'block';
+  if(countEl) countEl.textContent = pending.length;
+
+  pending.sort((a,b) => a.date.localeCompare(b.date));
+
+  list.innerHTML = pending.map(e => {
+    const diffMs = new Date(today+'T12:00:00') - new Date(e.date+'T12:00:00');
+    const days = Math.round(diffMs / 86400000);
+    const cls = days >= 7 ? 'urgent' : days >= 3 ? 'warning' : 'normal';
+    const supplierName = e.client || 'Sin proveedor';
+    const fechaStr = new Date(e.date+'T12:00:00').toLocaleDateString('es-PE',{day:'numeric',month:'short'});
+    const montoPendiente = (e.pendiente > 0 ? e.pendiente : e.amount);
+    const acuentaTag = e.acuenta > 0
+      ? `<span style="color:var(--k-accent);font-weight:600;"> · S/${e.acuenta.toFixed(2)} abonado</span>`
+      : '';
+    return `<div class="debt-item" id="ditem-${e.id}">
+      <div class="debt-item-row">
+        <div class="debt-days ${cls}">
+          <span class="debt-days-num">${days === 0 ? '!' : days}</span>
+          <span class="debt-days-lbl">${days===0?'hoy':days===1?'día':'días'}</span>
+        </div>
+        <div class="debt-info">
+          <div class="debt-supplier">${supplierName}</div>
+          <div class="debt-desc">${e.desc} · ${fechaStr}${acuentaTag}</div>
+        </div>
+        <div class="debt-amt">−S/ ${montoPendiente.toFixed(2)}</div>
+        <div class="debt-actions">
+          <button class="debt-abonar" id="dbtn-${e.id}" onclick="toggleDebtAbonoPanel('${e.id}', ${montoPendiente})">+ Abonar</button>
+          <button class="debt-pagar" onclick="pagarDebt('${e.id}');renderDebts();">✓ Pagué</button>
+        </div>
+      </div>
+      <div class="dabono-panel" id="dabono-${e.id}">
+        <div class="dabono-panel-label">¿Cuánto pagaste a ${supplierName}?</div>
+        <div class="dabono-panel-row">
+          <input class="dabono-input" id="dabono-inp-${e.id}" type="number" min="0.01" step="0.01"
+            max="${montoPendiente}" placeholder="S/ 0.00"
+            onkeydown="if(event.key==='Enter') confirmarDebtAbono('${e.id}', ${montoPendiente})">
+          <button class="dabono-btn-confirmar" onclick="confirmarDebtAbono('${e.id}', ${montoPendiente})">Confirmar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════
+   COMPARTIR POR WHATSAPP
+══════════════════════════════════════ */
+function shareProvWhatsapp(name, totalDebt, key){
+  const debts = entries.filter(e => e.debt && !e.paid && e.client && e.client.toLowerCase() === key);
+  const biz = bizProfile?.name || 'Kajita';
+  const today = new Date().toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'});
+  let msg = `📋 *Estado de cuenta — ${biz}*\n`;
+  msg += `Fecha: ${today}\n\n`;
+  msg += `Estimado/a *${name}*,\n`;
+  msg += `Le informamos que tiene las siguientes deudas pendientes:\n\n`;
+  debts.forEach(d => {
+    const pend = d.pendiente > 0 ? d.pendiente : d.amount;
+    const fecha = new Date(d.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'});
+    msg += `• ${d.desc} (${fecha}): *S/ ${pend.toFixed(2)}*`;
+    if(d.acuenta > 0) msg += ` (abonado S/ ${d.acuenta.toFixed(2)})`;
+    msg += '\n';
+  });
+  msg += `\n💰 *Total por pagar: S/ ${totalDebt.toFixed(2)}*\n`;
+  msg += `\nGracias por su preferencia. 🙏`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
+}
+
+function shareCliWhatsapp(name, totalDebt, key){
+  const debts = entries.filter(e => e.credit && e.client && e.client.toLowerCase() === key);
+  const biz = bizProfile?.name || 'Kajita';
+  const today = new Date().toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'});
+  let msg = `📋 *Estado de cuenta — ${biz}*\n`;
+  msg += `Fecha: ${today}\n\n`;
+  msg += `Estimado/a *${name}*,\n`;
+  msg += `Le recordamos que tiene los siguientes créditos pendientes:\n\n`;
+  debts.forEach(d => {
+    const pend = d.pendiente > 0 ? d.pendiente : d.amount;
+    const fecha = new Date(d.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'});
+    msg += `• ${d.desc} (${fecha}): *S/ ${pend.toFixed(2)}*`;
+    if(d.acuenta > 0) msg += ` (abonado S/ ${d.acuenta.toFixed(2)})`;
+    msg += '\n';
+  });
+  msg += `\n💰 *Total pendiente: S/ ${totalDebt.toFixed(2)}*\n`;
+  msg += `\nAgradecemos su puntualidad. 🙏`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
+}
+
+function toggleDebtsBar(){
+  const list = document.getElementById('debtsList');
+  const icon = document.getElementById('debtsToggleIcon');
+  if(!list) return;
+  const isOpen = list.classList.contains('open');
+  list.classList.toggle('open', !isOpen);
+  if(icon) icon.classList.toggle('open', !isOpen);
+}
+
+function toggleDebtAbonoPanel(id, montoPendiente){
+  const panel = document.getElementById('dabono-'+id);
+  const btn   = document.getElementById('dbtn-'+id);
+  if(!panel) return;
+  const isOpen = panel.classList.contains('open');
+  document.querySelectorAll('.dabono-panel.open').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.debt-abonar.active').forEach(b => b.classList.remove('active'));
+  if(!isOpen){
+    panel.classList.add('open');
+    if(btn) btn.classList.add('active');
+    setTimeout(() => { const inp = document.getElementById('dabono-inp-'+id); if(inp) inp.focus(); }, 100);
+  }
+}
+
+async function confirmarDebtAbono(id, montoPendiente){
+  const inp = document.getElementById('dabono-inp-'+id);
+  if(!inp) return;
+  const abono = parseFloat(inp.value);
+  if(isNaN(abono) || abono <= 0){
+    inp.style.borderColor = 'var(--k-expense)';
+    setTimeout(() => inp.style.borderColor = '', 1200);
+    return;
+  }
+  if(abono > montoPendiente + 0.001){
+    toast('⚠️ El abono supera la deuda (S/' + montoPendiente.toFixed(2) + ')');
+    return;
+  }
+  const e = entries.find(x => String(x.id) === String(id));
+  if(!e) return;
+
+  const nuevoAcuenta   = (e.acuenta || 0) + abono;
+  const nuevoPendiente = Math.max(0, e.amount - nuevoAcuenta);
+  const pagoTotal      = nuevoPendiente <= 0.001;
+
+  e.acuenta   = nuevoAcuenta;
+  e.pendiente = nuevoPendiente;
+  if(pagoTotal){ e.debt=false; e.paid=true; e.pay='cash'; }
+
+  if(currentUser && !currentUser.id?.includes('demo-user')){
+    try{
+      await sb.from('entries').update({
+        acuenta: nuevoAcuenta,
+        pendiente: nuevoPendiente > 0 ? nuevoPendiente : null,
+        is_debt: !pagoTotal,
+        is_paid: pagoTotal,
+        payment_type: pagoTotal ? 'cash' : 'credit'
+      }).eq('id', id).eq('user_id', currentUser.id);
+    }catch(err){ console.error('debt abono:', err); }
+  }
+
+  save();
+  toast(pagoTotal
+    ? '✓ Deuda pagada completamente'
+    : `✓ Abono de S/${abono.toFixed(2)} · Queda S/${nuevoPendiente.toFixed(2)}`);
+  buildDayBar(); render();
+}
+
+async function pagarDebt(id){
+  const e=entries.find(x=>String(x.id)===String(id)); if(!e) return;
+  e.paid=true; e.debt=false; e.pay='cash';
+  if(currentUser && !currentUser.id?.includes('demo-user')){
+    try{ await sb.from('entries').update({is_debt:false,is_paid:true,payment_type:'cash'}).eq('id',id).eq('user_id',currentUser.id); }
+    catch(err){ console.error('pagarDebt:',err); }
+  }
+  save(); buildDayBar(); render();
+  toast('✓ Deuda pagada — descontada del balance');
+}
+
+function toggleRemindersBar(){
+  const list = document.getElementById('remindersList');
+  const icon = document.getElementById('remindersToggleIcon');
+  if(!list) return;
+  const isOpen = list.classList.contains('open');
+  list.classList.toggle('open', !isOpen);
+  if(icon) icon.classList.toggle('open', !isOpen);
+}
+
+function toggleAbonoPanel(id, montoPendiente){
+  const panel = document.getElementById('abono-'+id);
+  const btn   = document.getElementById('rbtn-'+id);
+  if(!panel) return;
+  const isOpen = panel.classList.contains('open');
+  // Cerrar todos los demás
+  document.querySelectorAll('.abono-panel.open').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.reminder-abonar.active').forEach(b => b.classList.remove('active'));
+  if(!isOpen){
+    panel.classList.add('open');
+    if(btn) btn.classList.add('active');
+    setTimeout(() => {
+      const inp = document.getElementById('abono-inp-'+id);
+      if(inp) inp.focus();
+    }, 100);
+  }
+}
+
+async function confirmarAbono(id, montoPendiente){
+  const inp = document.getElementById('abono-inp-'+id);
+  if(!inp) return;
+  const abono = parseFloat(inp.value);
+  if(isNaN(abono) || abono <= 0){
+    inp.style.borderColor = 'var(--k-expense)';
+    setTimeout(() => inp.style.borderColor = '', 1200);
+    return;
+  }
+  if(abono > montoPendiente + 0.001){
+    toast('⚠️ El abono supera el monto pendiente (S/' + montoPendiente.toFixed(2) + ')');
+    return;
+  }
+
+  const e = entries.find(x => String(x.id) === String(id));
+  if(!e) return;
+
+  const nuevoAcuenta  = (e.acuenta || 0) + abono;
+  const nuevoPendiente = Math.max(0, e.amount - nuevoAcuenta);
+  const pagoTotal = nuevoPendiente <= 0.001;
+
+  // Actualizar en memoria
+  e.acuenta  = nuevoAcuenta;
+  e.pendiente = nuevoPendiente;
+  if(pagoTotal){
+    e.credit = false;
+    e.paid   = true;
+    e.pay    = 'cash';
+  }
+
+  // Guardar en Supabase
+  if(currentUser && !currentUser.id?.includes('demo-user')){
+    try{
+      await sb.from('entries').update({
+        acuenta: nuevoAcuenta,
+        pendiente: nuevoPendiente > 0 ? nuevoPendiente : null,
+        is_credit: !pagoTotal,
+        is_paid: pagoTotal,
+        payment_type: pagoTotal ? 'cash' : 'credit'
+      }).eq('id', id).eq('user_id', currentUser.id);
+    }catch(err){ console.error('abono:', err); }
+  }
+
+  save();
+  if(pagoTotal){
+    toast('✓ ¡Cobrado completo! Ya suma al balance.');
+  } else {
+    toast(`✓ Abono de S/${abono.toFixed(2)} registrado · Queda S/${nuevoPendiente.toFixed(2)}`);
+  }
+  buildDayBar();
+  render();
+}
 </script>
 
 <!-- ══════════════════════════════════════════════════════════════ -->
@@ -4384,7 +6282,7 @@ async function loadDB(){
         amount:parseFloat(x.amount), pay:x.payment_type,
         date: String(x.date||'').substring(0,10),
         time: String(x.time||'').substring(0,8),
-        credit:x.is_credit, client:x.client_name||'', paid:x.is_paid,
+        credit:x.is_credit, debt:x.is_debt||false, client:x.client_name||'', paid:x.is_paid,
         acuenta: x.acuenta ? parseFloat(x.acuenta) : 0,
         pendiente: x.pendiente ? parseFloat(x.pendiente) : 0
       }));
@@ -4404,7 +6302,9 @@ async function startApp(){
   document.getElementById('app').style.display='block';
   activeDay=getToday();
   console.log('startApp, activeDay=',activeDay);
+  loadDayNoteLocal();
   await loadDB();
+  await loadDayNotesRemote();
   buildDayBar();
   render();
   applyBizProfile();
@@ -4428,6 +6328,7 @@ async function handleDemoLogin(){
   document.getElementById('app').style.display='block';
   activeDay=getToday();
   entries=[];products=[];clients=[];
+  loadDayNoteLocal();
   buildDayBar();render();applyBizProfile();
   toast('🚀 Modo Demo activo');
 }
@@ -4435,23 +6336,34 @@ async function handleDemoLogin(){
 // ── LOGIN ──
 async function handleLogin(e){
   e.preventDefault();
-  const email=document.getElementById('loginEmail').value.trim();
-  const pw=document.getElementById('loginPassword').value;
-  if(!email||!pw){showAuthError('Completa todos los campos');return;}
-  
+  const isPhone = document.getElementById('lmtPhone').classList.contains('active');
+  let email;
+  if(isPhone){
+    const phone = document.getElementById('loginPhone').value.replace(/\D/g,'');
+    if(phone.length < 9){ showAuthError('Ingresa un número válido de 9 dígitos'); return; }
+    email = phoneToEmail(phone);
+  } else {
+    email = document.getElementById('loginEmail').value.trim();
+    if(!email){ showAuthError('Ingresa tu email'); return; }
+  }
+  const pw = document.getElementById('loginPassword').value;
+  if(!pw){ showAuthError('Ingresa tu contraseña'); return; }
+
   const btn=document.getElementById('loginBtn');
   btn.disabled=true;
   document.getElementById('loginText').style.display='none';
   document.getElementById('loginLoader').style.display='inline';
   document.getElementById('authError').style.display='none';
-  
+
   try{
     const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
     if(error)throw error;
     currentUser=window.currentUser=data.user;
     await startApp();
   }catch(err){
-    showAuthError(err.message.includes('Invalid')||err.message.includes('credentials')?'Email o contraseña incorrectos':'Error: '+err.message);
+    showAuthError(err.message.includes('Invalid')||err.message.includes('credentials')?
+      (isPhone ? 'Número o contraseña incorrectos' : 'Email o contraseña incorrectos') :
+      'Error: '+err.message);
     btn.disabled=false;
     document.getElementById('loginText').style.display='inline';
     document.getElementById('loginLoader').style.display='none';
@@ -4462,43 +6374,57 @@ async function handleLogin(e){
 async function handleRegister(e){
   e.preventDefault();
   const biz=document.getElementById('registerBusiness').value.trim();
-  const email=document.getElementById('registerEmail').value.trim();
+  const isPhone=document.getElementById('regLmtPhone').classList.contains('active');
+  let email;
+  if(isPhone){
+    const phone=document.getElementById('registerPhone').value.replace(/[^0-9]/g,'');
+    if(phone.length<9){showAuthError('Ingresa un número válido de 9 dígitos');return;}
+    email=phoneToEmail(phone);
+  } else {
+    email=document.getElementById('registerEmail').value.trim();
+    if(!email){showAuthError('Ingresa tu email');return;}
+  }
   const pw=document.getElementById('registerPassword').value;
   if(!biz){showAuthError('Ingresa el nombre de tu negocio');return;}
-  if(!email){showAuthError('Ingresa tu email');return;}
   if(pw.length<6){showAuthError('Contraseña mínimo 6 caracteres');return;}
-  
+
   const btn=document.getElementById('registerBtn');
   btn.disabled=true;
   document.getElementById('registerText').style.display='none';
   document.getElementById('registerLoader').style.display='inline';
   document.getElementById('authError').style.display='none';
-  
+
   try{
     const{data,error}=await sb.auth.signUp({email,password:pw,options:{data:{business_name:biz}}});
     if(error)throw error;
-    
     if(data.user){
-      // Guardar perfil en Supabase
-      try{await sb.from('profiles').upsert([{id:data.user.id,business_name:biz}]);}catch(e){}
-      
-      // Verificar si tiene sesión activa (sin confirmación de email)
+      const recoveryEmail = isPhone ? (document.getElementById('registerRecoveryEmail')?.value.trim()||null) : null;
+      try{await sb.from('profiles').upsert([{id:data.user.id, business_name:biz, recovery_email:recoveryEmail}]);}catch(e){}
       if(data.session){
         currentUser=window.currentUser=data.user;
         bizProfile={name:biz,rubro:''};
         await startApp();
         toast('¡Cuenta creada! Bienvenido a Kajita 🎉');
       } else {
-        // Supabase requiere confirmar email - intentar login directo
         const{data:loginData,error:loginErr}=await sb.auth.signInWithPassword({email,password:pw});
-        if(!loginErr && loginData.user){
+        if(!loginErr&&loginData.user){
           currentUser=window.currentUser=loginData.user;
           bizProfile={name:biz,rubro:''};
           await startApp();
           toast('¡Cuenta creada! Bienvenido a Kajita 🎉');
         } else {
-          // Necesita confirmar email
-          showAuthError('¡Cuenta creada! Revisa tu email para confirmar.','success');
+          // Intentar login automático
+        try{
+          const{data:ld,error:le}=await sb.auth.signInWithPassword({email,password:pw});
+          if(!le&&ld.user){
+            currentUser=window.currentUser=ld.user;
+            bizProfile={name:biz,rubro:''};
+            await startApp();
+            toast('¡Cuenta creada! Bienvenido a Kajita 🎉');
+            return;
+          }
+        }catch(e2){}
+        showAuthError(isPhone?'¡Cuenta creada! Ya puedes iniciar sesión.':'¡Cuenta creada! Revisa tu email para confirmar.','success');
           btn.disabled=false;
           document.getElementById('registerText').style.display='inline';
           document.getElementById('registerLoader').style.display='none';
@@ -4533,12 +6459,38 @@ async function refreshData(){
 
 // ── OLVIDÉ CONTRASEÑA ──
 async function handleForgotPassword(){
-  const email = document.getElementById('loginEmail').value.trim();
-  if(!email){
-    showAuthError('Escribe tu email primero');
-    document.getElementById('loginEmail').focus();
+  const isPhone = document.getElementById('lmtPhone')?.classList.contains('active');
+  
+  if(isPhone){
+    // Usuario con celular: buscar su email de recuperación
+    const phone = document.getElementById('loginPhone').value.replace(/[^0-9]/g,'');
+    if(phone.length < 9){ showAuthError('Ingresa tu número de celular primero'); return; }
+    
+    const phoneEmail = phoneToEmail(phone);
+    try{
+      // Buscar email de recuperación en profiles
+      const {data} = await sb.from('profiles').select('recovery_email').eq('id',
+        (await sb.auth.signInWithPassword({email:phoneEmail, password:'__check__'}))
+      ).maybeSingle();
+      
+      // Intentar reset directo al email del teléfono
+      const {error} = await sb.auth.resetPasswordForEmail(phoneEmail, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+      if(!error){
+        showAuthError('Si tienes email de recuperación registrado, te llegará el link ahí. Si no, contáctanos.','success');
+      } else {
+        showAuthError('No encontramos una cuenta con ese número.');
+      }
+    } catch(e) {
+      showAuthError('Contáctanos por WhatsApp para recuperar tu cuenta.');
+    }
     return;
   }
+  
+  // Usuario con email normal
+  const email = document.getElementById('loginEmail').value.trim();
+  if(!email){ showAuthError('Escribe tu email primero'); document.getElementById('loginEmail').focus(); return; }
   try{
     const{error}=await sb.auth.resetPasswordForEmail(email,{
       redirectTo: window.location.origin + window.location.pathname
@@ -4667,7 +6619,7 @@ async function submitEntry(){
 
   if(!desc)            { toast('Escribe una descripción'); return; }
   if(isNaN(amount)||amount<0){ toast('Ingresa un monto válido'); return; }
-  if(credit&&!client)  { toast('Escribe el nombre del cliente'); return; }
+  if(credit&&!client)  { toast(cType==='expense' ? 'Escribe el nombre del proveedor' : 'Escribe el nombre del cliente'); return; }
 
   if(!activeDay){
     const n=new Date();
@@ -4675,8 +6627,9 @@ async function submitEntry(){
   }
 
   const isIncome = cType==='income';
-  const isCredit = credit && isIncome;
-  const payment  = isCredit ? 'credit' : cPay;
+  const isCredit = credit && isIncome;   // ingreso pendiente de cobro
+  const isDebt   = credit && !isIncome;  // egreso pendiente de pago (fiado a proveedor)
+  const payment  = (isCredit || isDebt) ? 'credit' : cPay;
   
   // Pago parcial a crédito
   const acuenta  = isCredit ? (parseFloat(document.getElementById('iAcuenta').value)||0) : 0;
@@ -4688,13 +6641,34 @@ async function submitEntry(){
   if(editId !== null){
     const idx = entries.findIndex(e=>String(e.id)===String(editId));
     if(idx!==-1){
-      entries[idx]={...entries[idx], type:cType, desc, amount, qty, unitPrice, pay:payment, date:activeDay, credit:isCredit, client, paid:isCredit?entries[idx].paid:false};
+      const autoPaid    = (isCredit||isDebt) && acuenta >= amount && amount > 0;
+      const finalCredit  = isCredit && !autoPaid;
+      const finalDebt    = isDebt && !autoPaid;
+      const finalPaid    = autoPaid ? true : ((isCredit||isDebt) ? entries[idx].paid : false);
+      entries[idx]={...entries[idx],
+        type:cType, desc, amount, qty, unitPrice,
+        pay: autoPaid ? (cPay||'cash') : payment,
+        date:activeDay, credit:finalCredit, debt:finalDebt, client,
+        paid:finalPaid, acuenta, pendiente: (finalCredit||finalDebt) ? pendiente : 0
+      };
       if(currentUser && !currentUser.id?.includes('demo-user')){
-        try{ await sb.from('entries').update({type:cType,description:desc,amount,payment_type:payment,date:activeDay,is_credit:isCredit,client_name:client||null,is_paid:entries[idx].paid||false}).eq('id',editId).eq('user_id',currentUser.id); }
-        catch(e){ console.error('edit entry:',e); }
+        try{
+          await sb.from('entries').update({
+            type:cType, description:desc, amount,
+            payment_type: autoPaid ? (cPay||'cash') : payment,
+            date:activeDay,
+            is_credit:finalCredit,
+            is_debt:finalDebt,
+            client_name:client||null,
+            is_paid:finalPaid,
+            acuenta: acuenta||null,
+            pendiente: (finalCredit||finalDebt) ? (pendiente||null) : null
+          }).eq('id',editId).eq('user_id',currentUser.id);
+        }catch(e){ console.error('edit entry:',e); }
       }
+      if(autoPaid) toast(isDebt ? '✓ Deuda pagada — descontada del balance' : '✓ Cobrado completo — ya suma al balance');
+      else toast('✓ Movimiento actualizado');
     }
-    toast('✓ Movimiento actualizado');
     cancelEdit();
 
   } else {
@@ -4703,7 +6677,8 @@ async function submitEntry(){
       try{
         const {data,error} = await sb.from('entries').insert([{
           user_id:currentUser.id, type:cType, description:desc, amount,
-          payment_type:payment, date:activeDay, time, is_credit:isCredit,
+          payment_type:payment, date:activeDay, time,
+          is_credit:isCredit, is_debt:isDebt,
           client_name:client||null, is_paid:false,
           acuenta: acuenta||null, pendiente: pendiente||null
         }]).select().single();
@@ -4711,7 +6686,7 @@ async function submitEntry(){
         newId = data.id;
           }catch(e){ console.error('insert entry catch:',e); toast('✗ Error'); return; }
     }
-    entries.unshift({id:newId,type:cType,desc,amount,qty,unitPrice,pay:payment,date:activeDay,time,credit:isCredit,client,paid:false,acuenta,pendiente});
+    entries.unshift({id:newId,type:cType,desc,amount,qty,unitPrice,pay:payment,date:activeDay,time,credit:isCredit,debt:isDebt,client,paid:false,acuenta,pendiente});
     document.getElementById('iDesc').value='';
     document.getElementById('iAmt').value='';
     document.getElementById('iQty').value='';
@@ -4722,7 +6697,7 @@ async function submitEntry(){
     const pendEl=document.getElementById('iPendiente');
     if(pendEl) pendEl.textContent='0.00';
     onCreditToggle();
-    toast(isCredit?'⏳ Crédito registrado':(isIncome?'✓ Ingreso registrado':'✓ Egreso registrado'));
+    toast(isDebt?'⏳ Deuda registrada':(isCredit?'⏳ Crédito registrado':(isIncome?'✓ Ingreso registrado':'✓ Egreso registrado')));
   }
   // Reset filter a "Todos" para que el nuevo movimiento sea visible
   const allPill = document.querySelector('.fpill[data-f="all"]');
